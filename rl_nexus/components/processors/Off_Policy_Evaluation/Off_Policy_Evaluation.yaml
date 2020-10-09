@@ -1,0 +1,94 @@
+component: processors/Off_Policy_Evaluation
+enabled: 1
+dataset_seed: 25
+use_ray: false
+algo_seed: randint
+behavior_policy_range:
+  min: null
+  max: null
+load_data_from: null
+load_model_from: null
+save_results_to: null
+target_policy_id: null
+target_policy_temperature: 1.0
+num_episodes: 100
+horizon: 200
+gamma: 0.99
+normalization: std_norm
+environment:
+  component: environments/CartPole_Env
+model:
+  component: models/Simple_Policy_Model
+
+offline_estimators: ['MWL', 'MSWL', 'MQL']
+
+
+## Hyperparameters for different estimators listed below
+on_policy_eval_num_episodes: 200
+
+MSWL:
+  k_tau: 1.0
+  lr: 5.0e-3
+  reg: 0.0
+  batch_size: 500
+  num_iter: 5000
+  hidden_layers: [32,32]
+  eval_interval: 100
+  tail_average: 10
+
+MWL:
+  k_tau: 3.0
+  lr: 5.0e-3
+  reg: 0.0
+  batch_size: 500
+  num_iter: 10000
+  hidden_layers: [32,32]
+  eval_interval: 100
+  tail_average: 10
+
+MQL:
+  k_tau: 15
+  lr: 5.0e-3
+  reg: 2.0e-3
+  batch_size: 500
+  num_iter: 10000 #30000 original implementation
+  hidden_layers: [32,32]
+  eval_interval: 100
+  tail_average: 10
+
+DualDICE:
+  nu_learning_rate: 0.0005
+  zeta_learning_rate: 0.005
+  batch_size: 500
+  num_iter: 10000 #30000 original implementation
+  log_every: 100
+  function_exponent: 1.5
+  tail_average: 10
+  hidden_dim: 32
+  hidden_layers: 2
+  activation: relu
+
+Kernel:
+  model_reg: 1.0e-4
+  reward_reg: 1.0e-4
+  value_reg: 1.0e-3
+  num_random_feature_per_obs_dim: 250
+  default_length_scale: 0.1
+  scale_length_adjustment: median
+
+TDREG:
+  value_reg: 1.0e-3
+  input_mode: sa # or s (depending on whether we want the input to take the action as well)
+  num_iter: 500
+  batch_size: 1000
+  lr: 1.0e-3
+  td_ball_epsilon: 1.0e-2
+  normalize_w: true
+  hidden_layers: [64,64]
+  activation: tanh
+  w_reg: 1.0e-5
+  num_random_feature_per_obs_dim: 250
+  default_length_scale: 0.1
+  scale_length_adjustment: median
+  use_var_in_loss: true
+  tail_average: 10

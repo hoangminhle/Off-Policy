@@ -1,0 +1,47 @@
+component: root/Root_Component
+cuda: false
+log_to_tensorboard: false
+
+string_replacements:
+  <environment>: CartPole_Env
+  <experiment_path>: ../results/CartPole_Sparse
+  <name>: CartPole_Sparse
+
+forward_definitions:
+  - environment: &environment
+      component: environments/<environment>
+      name: <name>
+      seed: 123
+      fixed_length_episode: false
+      max_ep_len: 500
+      smooth_reward: false
+      stochastic_dynamics: false      
+  - model: &model
+      component: models/Simple_AC_Model
+      fcnet_hiddens: [64,64]
+      fcnet_activation: tanh
+      vf_share_layers: false
+  - agent: &ppo
+      component: agents/PPO2_Agent
+      model: *model
+      local_mode: false
+      num_workers: 4
+      preprocessor_pref: deepmind
+      seed: 123
+
+
+processing_stages:
+  # 1. Train an RL agent from scratch using ppo
+  - processing_stage:
+      component: processors/Train_Policy
+      enabled: true
+      # save_model_to: <experiment_path>/rl/<environment>/cartpole_policy.pt
+      save_model_to: <experiment_path>/rl/policy
+      # save_logs_to: null
+      max_iterations: 120000
+      iters_per_report: 4000
+      evaluation_num_episodes: 100
+      environment: *environment
+      evaluation_environment: *environment
+      agent: *ppo
+

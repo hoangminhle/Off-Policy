@@ -1,0 +1,38 @@
+component: root/Root_Component
+cuda: false
+log_to_tensorboard: false
+
+string_replacements:
+  <environment>: CartPole_Env
+  <experiment_path>: ../data/CartPole_Sparse
+  <model_path>: ../results
+  <name>: CartPole_Sparse
+
+forward_definitions:
+  - environment: &environment
+      component: environments/<environment>
+      name: <name>
+      seed: null
+      fixed_length_episode: true
+      max_ep_len: 500
+      smooth_reward: false
+      stochastic_dynamics: false      
+  - model: &model
+      component: models/Simple_Policy_Model
+      fcnet_hiddens: [64,64]
+      fcnet_activation: tanh
+
+processing_stages:
+  - processing_stage:
+      component: processors/Data_Collection
+      enabled: true
+      behavior_policy_range:
+        start: 5
+        stop: 16
+        step: 1
+      num_episodes: 100
+      dataset_seed:
+        start: 1
+        stop: 26
+        step: 1
+      model_path: <model_path>/<name>/rl

@@ -1,0 +1,10 @@
+component: job_launchers/XT
+enabled: 0               # Set to 1 (or True) in the run spec to launch a job.
+hp_tuning: False         # Current options: random, grid, dgd, bayesian, 0 (or False).
+total_runs: 1            # Total number of runs to be performed by the job. Limit=10000.
+compute_nodes: 1         # Number of compute nodes to be used.
+runs_per_node: 1         # Maximum number of concurrent runs per node.
+compute_target: azb-cpu  # Choice of compute backend. See options in xt_config.yaml.
+low_priority: True       # Use less expensive nodes, with possibility of preemption.
+hold: False              # For debugging, keeps the nodes active rather than deleting them.
+monitor: new             # Show run output in a 'new' command window, in the 'same' window, or 'none' at all

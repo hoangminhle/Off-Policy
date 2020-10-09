@@ -1,0 +1,7 @@
+component: environments/CartPole_Env
+name: CartPole_Sparse
+seed: 1
+max_ep_len: 200
+fixed_length_episode: true
+smooth_reward: false
+stochastic_dynamics: false

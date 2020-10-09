@@ -1,0 +1,19 @@
+component: processors/Data_Collection
+enabled: 1                      # Set to 0 (or false) to skip this stage of processing.
+# model_path: null
+behavior_policy_range:
+  min: null
+  max: null
+  step: null
+temperature: 1.0
+num_episodes: 100
+save_data_to: <experiment_path>
+dataset_seed: null
+  # start: null
+  # stop: null
+  # step: null
+load_model_from: $datastore/ope/policy/<name>/rl/ 
+environment:
+  component: environments/CartPole_Env
+model:
+  component: models/Simple_Policy_Model

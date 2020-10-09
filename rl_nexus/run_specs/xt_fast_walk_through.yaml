@@ -1,0 +1,74 @@
+component: root/Root_Component
+cuda: false  # This run spec uses Maze_Env, for which a GPU is never useful.
+
+log_to_tensorboard: true
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  hp_tuning: false
+  total_runs: 20
+  compute_nodes: 5
+  runs_per_node: 4
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+string_replacements:
+  <environment>: Maze_Env
+  <experiment_path>: ../results
+
+forward_definitions:
+  - environment: &environment1
+      component: environments/Maze_Env
+      agent_placement_seed: randint
+
+processing_stages:
+  # 1. Train an RL agent from scratch.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *environment1
+      save_model_to: <experiment_path>/rl/<environment>/fast_policy.pt
+      max_iterations: 5000
+      iters_per_report: 1000
+  # 2. Generate trajectories from the expert model.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment:
+        component: env_wrappers/Trajectory_Writer
+        save_path: <experiment_path>/data/fast_expert_trajs.hdf5
+        environment: *environment1
+      load_model_from: <experiment_path>/rl/<environment>/fast_policy.pt
+      max_iterations: 5000
+      iters_per_report: 1000
+      train: false
+  # 3. Perform self-supervised learning from the trajectories.
+  - processing_stage:
+      component: processors/SSL_Train_Proc
+      enabled: 1
+      save_logs_to: <experiment_path>/rl/<environment>/frozen/
+      load_trajectories_from: <experiment_path>/data/fast_expert_trajs.hdf5
+      save_backbone_to: <experiment_path>/ssl/fast_repres.pt
+      max_iterations: 500
+      iters_per_report: 250
+      ssl_trainer:
+        component: ssl_trainers/Reordered_Observation_Trainer
+  # 4. Train an RL agent from the pretrained model_core.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *environment1
+      load_backbone_from: <experiment_path>/ssl/fast_repres.pt
+      save_model_to: <experiment_path>/rl/<environment>/fast_finetuned_policy.pt
+      max_iterations: 5000
+      iters_per_report: 1000
+  # 5. Test the final model.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *environment1
+      load_model_from: <experiment_path>/rl/<environment>/fast_finetuned_policy.pt
+      max_iterations: 5000
+      iters_per_report: 1000
+      train: false

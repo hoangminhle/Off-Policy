@@ -1,0 +1,4 @@
+component: models/Simple_AC_Model
+fcnet_hiddens: [64,64]
+fcnet_activation: tanh
+vf_share_layers: false

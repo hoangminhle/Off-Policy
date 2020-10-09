@@ -1,0 +1,91 @@
+component: root/Root_Component
+cuda: false
+log_to_tensorboard: false
+
+string_replacements:
+  <environment>: CartPole_Env
+  <experiment_path>: ../results
+  # <model_path>: ../policy
+  <name>: CartPole_Sparse
+  # <data_path>: ../data
+
+forward_definitions:
+  - environment: &environment
+      component: environments/<environment>
+      name: <name>
+      # seed: null
+      fixed_length_episode: false
+      max_ep_len: 200
+      smooth_reward: false
+      stochastic_dynamics: false      
+  - model: &model
+      component: models/Simple_Policy_Model
+      fcnet_hiddens: [64,64]
+      fcnet_activation: tanh
+
+processing_stages:
+  - processing_stage:
+      component: processors/Off_Policy_Evaluation
+      # component: processors/OPE_Ray
+      enabled: true
+      dataset_seed: 3
+      algo_seed: randint
+      environment: *environment
+      model: *model
+      # load_data_from: <data_path>/<name>/
+      load_data_from: $datastore/data/<name>/
+      # load_model_from: <model_path>/<name>/rl/
+      load_model_from: $datastore/policy/<name>/rl/
+      # save_results_to: <experiment_path>/
+      save_results_to: $datastore/results/<name>/ope/
+      behavior_policy_range:
+        min: 5
+        max: 15
+      target_policy_id: 16
+      target_policy_temperature: 2.0
+      num_episodes: 200
+      on_policy_eval_num_episodes: 50
+      
+      # offline_estimators: ['PDIS', 'WPDIS', 'MB', 'LSTD', 'LSTDQ', 'MSWL']
+      offline_estimators: ['TDREG']
+      MSWL:
+        k_tau: 1.0
+        lr: 5.0e-3
+        reg: 0.0
+        batch_size: 500
+        num_iter: 5000
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+
+      MWL:
+        k_tau: 3.0
+        lr: 5.0e-3
+        reg: 0.0
+        batch_size: 500
+        num_iter: 10000
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+
+      MQL:
+        k_tau: 15
+        lr: 5.0e-3
+        reg: 2.0e-3
+        batch_size: 500
+        num_iter: 10000 #30000 original implementation
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+
+      DualDICE:
+        nu_learning_rate: 0.0005
+        zeta_learning_rate: 0.005
+        batch_size: 500
+        num_iter: 10000 #30000 original implementation
+        log_every: 100
+        function_exponent: 1.5
+        tail_average: 10
+        hidden_dim: 64
+        hidden_layers: 2
+

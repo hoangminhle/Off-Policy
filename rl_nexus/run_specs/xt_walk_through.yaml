@@ -1,0 +1,82 @@
+component: root/Root_Component
+cuda: false  # This run spec uses Maze_Env, for which a GPU is never useful.
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  hp_tuning: false
+  total_runs: 20
+  compute_nodes: 5
+  runs_per_node: 4
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+string_replacements:
+  <environment>: Maze_Env
+  <experiment_path>: ../results/walk_through
+
+forward_definitions:
+  - environment: &env
+      component: env_wrappers/Env_Formatter
+      history_length: 4
+      environment:
+        component: environments/Maze_Env
+        agent_placement_seed: randint
+  - environment: &record
+      component: env_wrappers/Env_Formatter
+      history_length: 4
+      environment:
+        component: env_wrappers/Trajectory_Writer
+        save_path: <experiment_path>/data/expert_trajs.hdf5
+        environment:
+          component: environments/Maze_Env
+          agent_placement_seed: randint
+
+# The following list of processor components will be instantiated and executed in sequence.
+processing_stages:
+  # 1. Train an RL agent from scratch.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *env
+      save_model_to: <experiment_path>/rl/<environment>/policy.pt
+      max_iterations: 100000
+      iters_per_report: 5000
+  # 2. Generate trajectories from the expert model.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *record
+      load_model_from: <experiment_path>/rl/<environment>/policy.pt
+      max_iterations: 100000
+      iters_per_report: 5000
+      train: false
+  # 3. Perform self-supervised learning from the trajectories.
+  - processing_stage:
+      component: processors/SSL_Train_Proc
+      enabled: 1
+      load_trajectories_from: <experiment_path>/data/expert_trajs.hdf5
+      save_backbone_to: <experiment_path>/ssl/repres.pt
+      batch_size: 8  # Set to 1 for deterministic behavior.
+      max_iterations: 5000
+      ssl_trainer:
+        component: ssl_trainers/Masked_Trainer
+        final_action_predictor: true
+  # 4. Train an RL agent from the pretrained model_core.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *env
+      load_backbone_from: <experiment_path>/ssl/repres.pt
+      save_model_to: <experiment_path>/rl/<environment>/finetuned_policy.pt
+      max_iterations: 100000
+      iters_per_report: 5000
+  # 5. Test the final model.
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      environment: *env
+      load_model_from: <experiment_path>/rl/<environment>/finetuned_policy.pt
+      max_iterations: 100000
+      iters_per_report: 5000
+      train: false

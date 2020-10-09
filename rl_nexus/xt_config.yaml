@@ -1,0 +1,105 @@
+# xt_config.yaml: local config file for XT
+
+external-services:
+    dilbertstorage: {type: "storage", provider: "azure-blob-21", key: "$vault"}
+    dilbertmongodb: {type: "mongo", mongo-connection-string: "$vault"}
+    dilbertbatch: {type: "batch", key: "$vault", url: "https://dilbertbatch.westus2.batch.azure.com"}
+    rdlbatches: {type: "batch", key: "$vault", url: "https://rdlbatches.eastus.batch.azure.com"}
+    dilbertbatchnds: {type: "batch", key: "$vault", url: "https://dilbertbatchnds.westus2.batch.azure.com"}
+    dilbert-ws: {type: "aml", subscription-id: "c8b7f913-60fb-4759-a310-fc5630e56f99", resource-group: "dilbert-rg"}
+    itpeusws: {type: "aml", subscription-id: "7ccdb8ae-4daf-4f0f-8019-e80665eb00d2", resource-group: "itpeus"}
+    resrchvc: {type: "aml", subscription-id: "46da6261-2167-4e71-8b0d-f4a45215ce61", resource-group: "researchvc"}
+    dilbertvault: {type: "vault", url: "https://dilbertkeyvault.vault.azure.net/"}
+
+compute-targets:
+    azb-cpu: {service: "dilbertbatch", vm-size: "Standard_H8", azure-image: "dsvm", nodes: 1, low-pri: true,  box-class: "dsvm", setup: "batch"}
+    azb-rdl-cpu: {service: "rdlbatches", vm-size: "Standard_H8", azure-image: "dsvm", nodes: 1, low-pri: true,  box-class: "dsvm", setup: "batch"}
+    azb-gpu: {service: "dilbertbatch", vm-size: "Standard_NC6", azure-image: "dsvm", nodes: 1, low-pri: true,  box-class: "dsvm", setup: "batch"}
+    azb-gpu-nds: {service: "dilbertbatchnds", vm-size: "Standard_ND6s", azure-image: "dsvm", nodes: 1, low-pri: true,  box-class: "dsvm", setup: "batch"}
+    philly: {service: "philly", vc: "msrlabs", cluster: "rr2", sku: "G1", nodes: 1, low-pri: true, docker: "philly-pytorch", setup: "philly"}
+    aml: {service: "dilbert-ws", compute: "gpu-NC6", vm-size: "Standard_NC6", nodes: 1, low-pri: false, setup: "aml"}
+    canada: {service: "canadav100ws", compute: "canada1GPUcl", nodes: 1, low-pri: true, setup: "aml"}
+    australia: {service: "australiav100ws", compute: "australia1GPUcl", nodes: 1, low-pri: true, setup: "aml"}
+    # ITP (AML) targets
+    itp-rr1: {service: "itpeusws", compute: "itpv100cl-poc", nodes: 1, low-pri: true, setup: "amlx"}
+    itp-east: {service: "itpeusws", compute: "itpp100cl", nodes: 1, low-pri: true, setup: "amlx"}
+    itp-asia: {service: "resrchvc", compute: "itpseasiav100cl", nodes: 1, low-pri: true, setup: "amlx"}
+    # Philly's GCR cluster replacement, currently the most accessible of ITP compute
+    itp-eastus: {service: "resrchvc", compute: "itpeastusv100cl", nodes: 1, low-pri: true, setup: "amlx"}
+
+setups:
+    batch: {activate: "conda activate py36", conda-packages: [], pip-packages: ["-r requirements.txt"], python-path: ["../"]}
+    philly: {activate: null, conda-packages: [], pip-packages: ["-r requirements.txt"], python-path: ["../"]}
+    aml: {activate: null, conda-packages: [], pip-packages: ["-r requirements.txt"], python-path: ["../"]}
+    amlx: {activate: null, conda-packages: [], pip-packages: ["-r requirements.txt"], use-sudo: true, python-path: ["../"]}
+    local: {activate: "conda activate $current_conda_env", conda-packages: [], pip-packages: [], python-path: ["../"]}
+
+xt-services:
+    storage: "dilbertstorage"          # storage for all services
+    mongo: "dilbertmongodb"            # database used for all runs across services
+    vault: "dilbertvault"              # where to keep sensitive data (service credentials)
+
+general:
+    advanced-mode: true                 # Needed for plotting.
+    workspace: "ws1"
+    experiment: "exp1"
+    primary-metric: "hpmax"             # name of metric to optimize in roll-ups, hyperparameter search, and early stopping
+    maximize-metric: true               # how primary metric is aggregated for hp search, hp explorer, early stopping
+    # step-name: "iters"
+    step-name: "Dataset"
+    xt-team-name: "dilbert"             # for use with XT Grok
+    # monitor                           # (none, same, new) controls if monitoring is started when a job is submitted, and if a new window should be opened for the monitoring.
+
+hyperparameter-search:
+    option-prefix: null                    # prefix for hp search generated cmdline args (set to None to disable cmd args from HP's)
+    fn-generated-config: "rl_nexus/downloaded_hp_config.yaml"  # name of HP search generated config file
+    static-search: false                   # false to allow manual refinement of a random search.
+
+hyperparameter-explorer:
+    steps-name: "Dataset"                    # X-axis units. (Should this be in general section?)
+    # steps-name: "iters"                    # X-axis units. (Should this be in general section?)
+    log-interval-name: "iters_per_report"  # name of hyperparameter that specifies how often to log metrics. (no longer needed)
+
+run-reports:
+    last: 0                       # Default number of runs to list. Zero shows all (within the given job, for instance).
+    uppercase-hdr: false          # show column names in uppercase letters
+    # "columns" defines the columns to show (and their order) for the "list runs" cmd.  The columns listed
+    # should be a standard column, or a user-logged hyperparameter or metric.  use "list runs --available" to find available columns.
+    columns: [
+      # general XT
+        "workspace", "job", "target", "run", "status",
+
+      # metrics
+        # "metrics.iters:,", "metrics.*",
+        "metrics.Dataset:,", "metrics.*",
+
+      # hyperparameters
+        "hparams.*",
+    ]
+
+job-reports:
+    columns: ["job", "created", "started", "workspace", "experiment", "target", "nodes", "repeat", "tags.description", "tags.urgent", "tags.sad=SADD", "tags.funny", "low_pri",
+              "vm_size", "azure_image", "service", "vc", "cluster", "queue", "service", "search",
+              "job_status:$bz", "running_nodes:$bz", "running_runs:$bz", "error_runs:$bz", "completed_runs:$bz"]
+
+code:
+    code-dirs: ["./**::rl_nexus", "../requirements.txt::."] # Copy the current dir, call it 'rl_nexus'. Copy requirements.txt from the parent dir.
+    working-dir: "rl_nexus"     # specifies the working directory for the run, relative to the code directory
+    code-omit: ["results"]      # directories and files to omit when capturing before/after files
+    xtlib-upload: false          # upload XTLIB sources files for each run and use for controller and ML app
+
+logging:
+    mirror-files: "results/**"  # default wildcard path for log files to mirror (live upload of changes)
+    # merge-batch-logs: true      # Merges STDOUT.txt and STDERR.txt into one STDBOTH.txt file.
+
+after-files:
+    after-dirs: ["results/**", "rl_nexus/**"]         # specifies output files (for capture from compute node to STORE)
+
+data:
+    data-share-path: ""                      # path in data share for current app's data
+    data-action: "mount"                     # data action at start of run: none, download, mount
+    data-writable: true                      # when true, mounted data is writable
+    
+internal:
+    console: "normal"                      # controls the level of console output (none, normal, diagnostics, detail)
+    stack-trace: true

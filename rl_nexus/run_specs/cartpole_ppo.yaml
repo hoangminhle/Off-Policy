@@ -1,0 +1,41 @@
+component: root/Root_Component
+cuda: false
+
+string_replacements:
+  <environment>: CartPole_Env
+  <experiment_path>: ../results/cartpole
+
+forward_definitions:
+  - environment: &environment
+      component: environments/CartPole_Env
+      fixed_length_episode: false
+      max_ep_len: 500
+  - model: &model
+      component: models/Simple_AC_Model
+      # model_embedding:
+      #   component: model_embeddings/Passthrough_Embedding
+      # model_core:
+      #   component: model_cores/FC_Core
+      #   num_layers: 2
+      #   layer_size: 64
+      # model_head:
+      #   component: model_heads/AC_Split_Head
+      #   num_ac_layers: 1
+  - agent: &ppo
+      component: agents/PPO2_Agent
+      model: *model
+      # preprocessor_pref: deepmind
+
+
+processing_stages:
+  # 1. Train an RL agent from scratch using ppo
+  - processing_stage:
+      component: processors/Train_Policy
+      enabled: true
+      # save_model_to: <experiment_path>/rl/<environment>/cartpole_policy.pt
+      save_model_to: <experiment_path>/rl/<environment>/cartpole_policy
+      max_iterations: 120000
+      iters_per_report: 4000
+      environment: *environment
+      agent: *ppo
+

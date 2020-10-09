@@ -1,0 +1,72 @@
+component: root/Root_Component
+cuda: false  # Ignored by RLlib agents like PPO_Agent, which need to have the num_gpus property set.
+
+experiment_path: ../results
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  hp_tuning: dgd
+  total_runs: 500
+  compute_nodes: 25
+  runs_per_node: 4
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+hyperparameters:
+  - name: &seqlen
+      ordered_tuning_values: [4, 6, 8, 12, 16, 24, 32]
+      tuned_value: 24
+  - name: &disc
+      ordered_tuning_values: [0.95, 0.90, 0.85, 0.80]
+      tuned_value: 0.90
+  - name: &clip
+      ordered_tuning_values: [64, 128, 256, 512, 1024, 2048]
+      tuned_value: 2048
+  - name: &lr
+      ordered_tuning_values: [1.0e-4, 1.6e-4, 2.5e-4, 4.0e-4, 6.3e-4, 1.0e-3, 1.6e-3, 2.5e-3, 4.0e-3, 6.3e-3]
+      tuned_value: 0.0004
+  - name: &rscale
+      ordered_tuning_values: [2, 4, 8, 16, 32]
+      tuned_value: 32
+  - name: &embed
+      ordered_tuning_values: [32, 64, 128, 256, 512, 1024]
+      tuned_value: 1024
+  - name: &units
+      ordered_tuning_values: [128, 192, 256, 384, 512]
+      tuned_value: 384
+  - name: &out
+      ordered_tuning_values: [32, 64, 128, 256, 512, 1024]
+      tuned_value: 1024
+
+string_replacements:
+  <environment>: Maze_Env
+  <experiment_path>: ../results/fast_walk_through
+
+forward_definitions:
+  - agent: &agent
+      component: agents/AAC_Agent
+      random_seed: randint
+      bptt_period: *seqlen
+      discount_factor: *disc
+      gradient_clip: *clip
+      learning_rate: *lr
+      reward_scale: *rscale
+      model:
+        component: models/Model_Nexus
+        model_core:
+          component: model_cores/GRU_Core
+          obs_embed_size: *embed
+          num_rnn_units: *units
+          output_layer_size: *out
+  - environment: &env
+      component: environments/Maze_Env
+      agent_placement_seed: randint
+
+processing_stages:
+  - processing_stage:
+      component: processors/RL_Proc
+      max_iterations: 100000
+      iters_per_report: 10000
+      agent: *agent
+      environment: *env

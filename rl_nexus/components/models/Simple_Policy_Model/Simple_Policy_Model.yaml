@@ -1,0 +1,4 @@
+component: models/Simple_Policy_Model
+fcnet_hiddens: [64,64]
+fcnet_activation: tanh
+temperature: 1.0

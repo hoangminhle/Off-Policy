@@ -1,0 +1,94 @@
+component: root/Root_Component
+cuda: false
+log_to_tensorboard: false
+
+experiment_path: ../results
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  hp_tuning: grid
+  total_runs: 25
+  compute_nodes: 5
+  runs_per_node: 5
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+hyperparameters:
+  - name: &dataseed
+      ordered_tuning_values: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]
+      # ordered_tuning_values: [1,2,3,4,5,6]
+      tuned_value: 1
+
+string_replacements:
+  <environment>: CartPole_Env
+  <experiment_path>: ../results
+  # <model_path>: ../policy
+  <name>: CartPole_Sparse
+  # <data_path>: ../data
+
+forward_definitions:
+  - environment: &environment
+      component: environments/<environment>
+      name: <name>
+      # seed: null
+      fixed_length_episode: false
+      max_ep_len: 200
+      smooth_reward: false
+      stochastic_dynamics: false      
+  - model: &model
+      component: models/Simple_Policy_Model
+      fcnet_hiddens: [64,64]
+      fcnet_activation: tanh
+
+processing_stages:
+  - processing_stage:
+      component: processors/Off_Policy_Evaluation
+      # component: processors/OPE_Ray
+      enabled: true
+      dataset_seed: *dataseed
+      algo_seed: randint
+      environment: *environment
+      model: *model
+      load_data_from: $datastore/ope/data/<name>/
+      load_model_from: $datastore/ope/policy/<name>/rl/
+      save_results_to: $datastore/ope/results/<name>/ope/
+      behavior_policy_range:
+        min: 1
+        max: 10
+      target_policy_id: 16
+      target_policy_temperature: 2.0
+      num_episodes: 200
+      on_policy_eval_num_episodes: 50
+      
+      offline_estimators: ['MSWL', 'MQL', 'MWL']
+      MSWL:
+        k_tau: 1.0
+        lr: 5.0e-3
+        reg: 0.0
+        batch_size: 500
+        num_iter: 5000
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+
+      MWL:
+        k_tau: 3.0
+        lr: 5.0e-3
+        reg: 0.0
+        batch_size: 500
+        num_iter: 10000
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+
+      MQL:
+        k_tau: 15
+        lr: 5.0e-3
+        reg: 2.0e-3
+        batch_size: 500
+        num_iter: 30000
+        hidden_layers: [64,64]
+        eval_interval: 100
+        tail_average: 10
+

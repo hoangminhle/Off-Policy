@@ -1,0 +1,30 @@
+component: processors/Train_Policy
+enabled: 1                      # Set to 0 (or false) to skip this stage of processing.
+load_backbone_from: null        # Optional path to model backbone (embedding + core together) to load at start of processing.
+load_core_from: null            # Optional path to model core to load at start of processing.
+load_embedding_from: null       # Optional path to model embedding to load at start of processing.
+load_head_from: null
+load_model_from: null           # Optional path to model to load at start of processing.
+save_head_to: null              # Optional file path to save head
+save_backbone_to: null          # Optional file path to save model backbone
+save_model_to: null             # Optional file path to store final model.
+save_logs_to: <experiment_path> # Optional path to log directory.
+max_iterations: 100000          # Length of the stage in time steps (environment interactions)
+iters_per_report: 1000          # Number of iterations between status reports.
+evaluation_num_episodes: 10      # After every iters_per_report iterations, the model will be evaluated for this many episodes. These episodes don't count towards the training budget.
+                                # If zero, the model's performance is evaluated by averaged over every interval of iters_per_report training iterations, as usual.
+                                # NOTE: if evaluation_num_episodes > 0, you must specify a non-null evaluation_environment.
+evaluation_use_exploration: true # Determines if exploration should be turned off during evaluaion. For algorithms that operate on stochastic policy classes, such as PPO,
+                                # setting this to "false" effectively changes the policy for evaluation by making them deterministically choose the most likely action from the distribution.
+get_action_from_env: false      # Controls whether to overwrite agent's action with emvironment's (expert) action.
+train: true                     # Controls whether the agent is trained or not.
+render: false                   # Enable graphical display.
+disable_eval: false             # Prevents the model from being put into eval mode (e.g. disabling dropout)
+environment:
+  component: environments/CartPole_Env
+evaluation_environment:    # The environment used for evaluating the model during training, specified in the same way the "environment" component is.
+  component: environments/CartPole_Env                                # If intra-stage evaluation is off, i.e. evaluation_num_episodes = 0, evaluation_environment is ignored. Otherwise is must have a non-null value.
+  fixed_length_episode: false  
+  max_ep_len: 500
+agent:
+  component: agents/PPO2_Agent

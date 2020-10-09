@@ -1,0 +1,39 @@
+component: root/Root_Component
+cuda: false # This run spec uses Maze_Env, for which a GPU is never useful, so don't attempt to use a GPU.
+
+string_replacements:
+  <environment>: Maze_Env
+  <experiment_path>: ../results/fast_walk_through
+
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  total_runs: 1
+  compute_nodes: 1
+  runs_per_node: 1
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+processing_stages:
+  # 1. Write to the datastore
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      save_model_to: $datastore/shared/fast_policy.pt
+      max_iterations: 10
+      environment:
+        component: environments/Maze_Env
+      agent:
+        component: agents/AAC_Agent
+  # 2. Read from the datastore
+  - processing_stage:
+      component: processors/RL_Proc
+      enabled: 1
+      load_model_from: $datastore/shared/fast_policy.pt
+      max_iterations: 10
+      train: false
+      environment:
+        component: environments/Maze_Env
+      agent:
+        component: agents/AAC_Agent

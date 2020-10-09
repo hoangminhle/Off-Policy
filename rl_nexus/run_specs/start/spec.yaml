@@ -1,0 +1,28 @@
+# Runspecs may contain 5 sections, in this recommended order:
+#   1. component: root/Root_Component
+#   2. hyperparameters:
+#   3. string_replacements:
+#   4. forward_definitions:
+#   5. processing_stages:
+# Only the sections 1, 3, and 5 are required.
+
+string_replacements:
+  <environment>: Maze_Env
+  <experiment_path>: ../results/default
+
+component: root/Root_Component
+cuda: true  # Ignored by RLlib agents like PPO_Agent, which need to have the num_gpus property set.
+
+# ***** WARNING! ******
+# The cuda parameter has no effect on agents from rllib, e.g., A2C_Agent. You need to set the num_gpus in that agent's yaml instead.
+
+job_launcher:
+  component: job_launchers/XT
+  enabled: 0
+  hp_tuning: false
+  total_runs: 20
+  compute_nodes: 5
+  runs_per_node: 4
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
