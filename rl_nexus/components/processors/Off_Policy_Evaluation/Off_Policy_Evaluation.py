@@ -18,8 +18,6 @@ class Off_Policy_Evaluation():
     def __init__(self, spec_tree, device):
         self.spec_tree = spec_tree
         
-        # self.seed = eval('random.'+spec_tree['seed'])
-        # self.seed = random.randint(spec_tree['algo_seed'])
         self.seed = spec_tree['algo_seed']
 
         self.dataset_seed = spec_tree['dataset_seed']
@@ -48,13 +46,6 @@ class Off_Policy_Evaluation():
         self.obs_dim = obs_space.shape[0]
         self.act_dim = action_space.n
 
-        # locate off-line dataset
-        # dataset_path = spec_tree['load_data_from'] + '/' + self.environment.name+'/behavior_'+str(behavior_policy_min_id)+'_'+\
-        #     str(behavior_policy_max_id)+'/n_eps'+str(self.num_episodes)+'/horizon'+str(self.horizon)+'/seed'+str(self.dataset_seed)+'.h5'
-
-        # dataset_path = spec_tree['load_data_from'] + '/behavior_' + str(self.behavior_min_id) + '_' +\
-        #     str(self.behavior_max_id)+'/n_eps'+str(self.num_episodes)+'/horizon'+str(self.horizon)+'/seed'+str(self.dataset_seed)+'.h5'
-
        #* prepare the result path
         self.behavior_policy_type = spec_tree['behavior_policy_type']
         if self.behavior_policy_type == 'random':
@@ -82,17 +73,10 @@ class Off_Policy_Evaluation():
         self.read_data_from_file = spec_tree['read_data_from_file']
         self.dataset_path_prefix = None
 
-        # self.dataset_path_prefix = spec_tree['load_data_from'] + '/behavior_' + str(self.behavior_min_id) + '_' +\
-        #     str(self.behavior_max_id)+'/n_eps'+str(self.num_episodes)+'/horizon'+str(self.horizon)+'/seed'
         if self.read_data_from_file:
             self.dataset_path_prefix = spec_tree['load_data_from'] + behavior_type_string +'/n_eps{}/horizon{}/seed'.format(\
                 self.num_episodes, self.horizon)
 
-        # self.result_path_prefix = spec_tree['save_results_to'] + '/behavior_' + str(self.behavior_min_id) + '_' +\
-        #     str(self.behavior_max_id)+'/target_'+str(spec_tree['target_policy_id'])+'_temp'+str(self.target_temp)+'/n_eps'+str(self.num_episodes)+'/horizon'+str(self.horizon)+'/seed'
-
-        # sess = make_session()
-        # sess.__enter__()
         target_policy_net_path = spec_tree['load_model_from']+ '/policy_' +\
              str(spec_tree['target_policy_id'])+'.pt'        
         # self.tf_policy_net = convert_policy_network(spec_tree,obs_space,action_space, temperature = self.target_temp, path = target_policy_net_path)
@@ -101,41 +85,10 @@ class Off_Policy_Evaluation():
         self.target_policy_net.load_model(target_policy_net_path)
         # self.target_model_weights_list = extract_model_weights(self.target_policy_net.model, self.obs_dim, self.act_dim)
         self.target_model_weights_list = convert_torch_model_weights_to_list(self.target_policy_net.model)
-        # diff = 0
-        # pdb.set_trace()
-        # for i in range(len(weights_list)):
-        #     if len(weights_list[i])>0:
-        #         diff += ((weights_list[i][0] - self.target_model_weights_list[i][0])**2).sum()
-        #         diff += ((weights_list[i][1] - self.target_model_weights_list[i][1])**2).sum()
-        # pdb.set_trace()
-        # data = read_batch_experience(dataset_path, self.target_policy_net, self.num_episodes, self.target_temp, self.horizon, self.gamma)
         
         on_policy_num_eps = spec_tree['on_policy_eval_num_episodes']
         self.value_true = evaluate_on_policy(self.environment, self.target_policy_net, num_episodes = on_policy_num_eps, gamma = self.gamma)
         
-        # if self.normalization == 'std_norm':
-        #     #* whiten data
-        #     obs_mean = np.mean(data['obs'], axis=0, keepdims = True)
-        #     obs_std = np.std(data['obs'], axis = 0, keepdims = True)
-        #     data['obs'] = (data['obs'] - obs_mean) / obs_std
-        #     data['next_obs'] = (data['next_obs'] - obs_mean) / obs_std
-        #     data['init_obs'] = (data['init_obs'] - obs_mean) / obs_std
-        #     data['term_obs'] = (data['term_obs'] - obs_mean) / obs_std
-
-        #     self.norm_performed = {'type': self.normalization, 'shift': obs_mean, 'scale': obs_std}
-        # else:
-        #     self.norm_performed = {'type': None, 'shift': None, 'scale': None}
-        # # data['init_obs'] = data['obs'][::self.horizon]
-        # # data['init_acts'] = data['acts'][::self.horizon]
-        # # data['term_obs'] = data['next_obs'][self.horizon-1::self.horizon]
-        # data['target_prob_init_obs'] = data['target_prob_obs'][::self.horizon]
-        # data['target_prob_term_obs'] = data['target_prob_next_obs'][self.horizon-1::self.horizon]
-
-        # data['next_acts'] = data['acts'].copy()
-        # for i in range(self.num_episodes):
-        #     data['next_acts'][i*self.horizon:(i+1)*self.horizon-1] = data['acts'][i*self.horizon+1:(i+1)*self.horizon].copy()
-        # self.data = data
-        # import pdb; pdb.set_trace()
         self.hidden_layers_net = self.spec_tree['model']['fcnet_hiddens']
         self.activation_net = self.spec_tree['model']['fcnet_activation']
 
@@ -221,14 +174,16 @@ class Off_Policy_Evaluation():
             value_est = self.run_MQL()
         elif estimator == 'DualDICE':
             value_est = self.run_DualDICE()
-        elif estimator == 'TDREG':
-            value_est = self.run_TDREG()
-        elif estimator == 'TDREG_Neural':
+        elif estimator == 'TDREG-K':
+            value_est = self.run_TDREG_Kernel()
+        elif estimator == 'TDREG-N':
             value_est = self.run_TDREG_Neural()
         elif estimator == 'FQE':
             value_est = self.run_FQE()
-        elif estimator == 'MB':
-            value_est = self.run_MB()
+        elif estimator == 'MB-K':
+            value_est = self.run_MB_Kernel()
+        elif estimator == 'MB-N':
+            value_est = self.run_MB_Neural()
         elif estimator == 'LSTD':
             value_est = self.run_LSTD()
         elif estimator == 'LSTDQ':
@@ -253,14 +208,16 @@ class Off_Policy_Evaluation():
             value_est = self.run_MQL()
         elif estimator == 'DualDICE':
             value_est = self.run_DualDICE()
-        elif estimator == 'TDREG':
-            value_est = self.run_TDREG()
-        elif estimator == 'TDREG_Neural':
+        elif estimator == 'TDREG-K':
+            value_est = self.run_TDREG_Kernel()
+        elif estimator == 'TDREG-N':
             value_est = self.run_TDREG_Neural()
         elif estimator == 'FQE':
             value_est = self.run_FQE()
-        elif estimator == 'MB':
-            value_est = self.run_MB()
+        elif estimator == 'MB-K':
+            value_est = self.run_MB_Kernel()
+        elif estimator == 'MB-N':
+            value_est = self.run_MB_Neural()
         elif estimator == 'LSTD':
             value_est = self.run_LSTD()
         elif estimator == 'LSTDQ':
@@ -336,7 +293,7 @@ class Off_Policy_Evaluation():
         # logger.write_and_condense_metrics()
         return result
 
-    def run_MSWL(self):
+    def run_MSWL_torch(self):
         from rl_nexus.components.ope.MSWL_Kernel import MSWL
         k_tau = self.spec_tree['MSWL']['k_tau']
         lr = self.spec_tree['MSWL']['lr']
@@ -352,7 +309,7 @@ class Off_Policy_Evaluation():
         value_est = mswl.train(num_iter = num_iter, batch_size=batch_size, lr=lr, w_reg = reg, eval_interval = eval_interval)
         return ('MSWL', value_est)
         
-    def run_MSWL_old(self):
+    def run_MSWL(self):
         from rl_nexus.components.ope.MSWL_Kernel_Tf import MSWL
         k_tau = self.spec_tree['MSWL']['k_tau']
         lr = self.spec_tree['MSWL']['lr']
@@ -374,7 +331,7 @@ class Off_Policy_Evaluation():
             if iter % eval_interval == 0:
                 value_est = mswl.evaluation(self.data['obs'], self.data['acts'], self.data['factor'], self.data['rews'])
                 value_est_list.append(value_est)
-                if iter % 1000 == 0:
+                if iter % 1000 == 0 and self.debug_mode:
                     print('Iter: {}. True: {:.2f}. MSWL Estimate: {:.2f}'.format(iter,self.value_true, np.mean(value_est_list[-tail_average:])))
         
         mswl.close()
@@ -408,7 +365,7 @@ class Off_Policy_Evaluation():
                 value_est_list.append(value_est)
                 if iter % 1000 == 0:
                     print('Iter: {}. True: {:.2f}. MWL Estimate: {:.2f}'.format(iter,self.value_true, np.mean(value_est_list[-tail_average:])))
-        
+                    # pdb.set_trace()
         mwl.close()
         
         return ('MWL', np.mean(value_est_list[-tail_average:]))
@@ -431,11 +388,11 @@ class Off_Policy_Evaluation():
         lr = 5e-3
 
         mql = MQL(self.data, self.obs_dim, self.act_dim, k_tau, norm = None, hidden_layers=hidden_layers,\
-            seed = self.seed, gamma = self.gamma)
+            seed = self.seed, gamma = self.gamma, debug= self.debug_mode)
         value_est = mql.train(num_iter = num_iter, batch_size=batch_size, lr=lr, q_reg = reg, eval_interval = eval_interval)
         return ('MQL', value_est)
 
-    def run_MQL_old(self):
+    def run_MQL_tf(self):
         from rl_nexus.components.ope.MQL_Kernel_Tf import MQL
         k_tau = self.spec_tree['MQL']['k_tau']
         lr = self.spec_tree['MQL']['lr']
@@ -624,37 +581,35 @@ class Off_Policy_Evaluation():
                 default_length_scale=default_length_scale, random_feature_per_obs_dim=num_random_feature_per_obs_dim,\
                     scale_length_adjustment= scale_length_adjustment, norm = None, policy_net = None)
 
-    def run_MB(self):
-        # value_est = self.run_MB_Kernel()
-        value_est = self.run_MB_Neural()
-        return ('MB', value_est)
+    # def run_MB(self):
+    #     # value_est = self.run_MB_Kernel()
+    #     value_est = self.run_MB_Neural()
+    #     return ('MB', value_est)
 
     def run_MB_Neural(self):
         from rl_nexus.components.ope.Model_Based import Model_Based
-        num_random_feature_per_obs_dim = self.spec_tree['MB']['num_random_feature_per_obs_dim']
-        default_length_scale = self.spec_tree['MB']['default_length_scale']
-        scale_length_adjustment = self.spec_tree['MB']['scale_length_adjustment']
-        model_reg = self.spec_tree['MB']['model_reg']
-        reward_reg = self.spec_tree['MB']['reward_reg']
+        hidden_layers = self.spec_tree['MB-N']['hidden_layers']
+        activation = self.spec_tree['MB-N']['activation']
+        num_iter = self.spec_tree['MB-N']['num_iter']
+        reg = self.spec_tree['MB-N']['reg']
+        lr = self.spec_tree['MB-N']['lr']
+        batch_size = self.spec_tree['MB-N']['batch_size']
+        tail_average = self.spec_tree['MB-N']['tail_average']
 
-        # mb = Model_Based_Kernel(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
-        #     model_reg=model_reg, reward_reg=reward_reg, default_length_scale=default_length_scale,\
-        #         random_feature_per_obs_dim=num_random_feature_per_obs_dim, scale_length_adjustment=scale_length_adjustment,\
-        #             norm=None, policy_net=None)
         mb = Model_Based(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
-            policy_net=None, hidden_layers=[64,64], activation='tanh', norm=None, use_delayed_target=True)
-        value_est = mb.train()
+            hidden_layers=hidden_layers, activation=activation, norm=None, debug=self.debug_mode)
+        value_est = mb.train(num_iter=num_iter, lr=lr, batch_size=batch_size, tail_average=tail_average)
         return value_est
         # value_est = mb.estimate()
-        # return ('MB', value_est)
+        return ('MB-N', value_est)
 
     def run_MB_Kernel(self):
         from rl_nexus.components.ope.Model_Based_Kernel import Model_Based_Kernel
-        num_random_feature_per_obs_dim = self.spec_tree['MB']['num_random_feature_per_obs_dim']
-        default_length_scale = self.spec_tree['MB']['default_length_scale']
-        scale_length_adjustment = self.spec_tree['MB']['scale_length_adjustment']
-        model_reg = self.spec_tree['MB']['model_reg']
-        reward_reg = self.spec_tree['MB']['reward_reg']
+        num_random_feature_per_obs_dim = self.spec_tree['MB-K']['num_random_feature_per_obs_dim']
+        default_length_scale = self.spec_tree['MB-K']['default_length_scale']
+        scale_length_adjustment = self.spec_tree['MB-K']['scale_length_adjustment']
+        model_reg = self.spec_tree['MB-K']['model_reg']
+        reward_reg = self.spec_tree['MB-K']['reward_reg']
 
         mb = Model_Based_Kernel(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
             model_reg=model_reg, reward_reg=reward_reg, default_length_scale=default_length_scale,\
@@ -662,8 +617,7 @@ class Off_Policy_Evaluation():
                     norm=None, policy_net=None)
 
         value_est = mb.estimate()
-        return value_est
-        # return ('MB', value_est)
+        return ('MB-K', value_est)
             
     def run_LSTD(self):
         value_est = self.kernel_estimator.estimate_LSTD()
@@ -698,21 +652,21 @@ class Off_Policy_Evaluation():
         reg = self.spec_tree['FQE']['reg']
 
         fqe = FQE(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon, policy_net = None,\
-            hidden_layers = hidden_layers, activation = activation, norm = None, use_delayed_target= use_delayed_target)
+            hidden_layers = hidden_layers, activation = activation, norm = None, use_delayed_target= use_delayed_target, debug = self.debug_mode)
         
         value_est = fqe.train(num_iter = num_iter, lr=lr, batch_size = batch_size, tail_average=tail_average, reg = reg)
         return ('FQE', value_est)
 
     def run_TDREG_Neural(self):
         from rl_nexus.components.ope.TDREG_Neural import TDREG_Neural
-        hidden_layers = self.spec_tree['TDREG_Neural']['hidden_layers']
-        activation = self.spec_tree['TDREG_Neural']['activation']
+        hidden_layers = self.spec_tree['TDREG-N']['hidden_layers']
+        activation = self.spec_tree['TDREG-N']['activation']
 
-        num_iter = self.spec_tree['TDREG_Neural']['num_iter']
-        normalize_w = self.spec_tree['TDREG_Neural']['normalize_w']
-        lr = self.spec_tree['TDREG_Neural']['lr']
-        batch_size = self.spec_tree['TDREG_Neural']['batch_size']
-        td_reg = self.spec_tree['TDREG_Neural']['td_reg']
+        num_iter = self.spec_tree['TDREG-N']['num_iter']
+        normalize_w = self.spec_tree['TDREG-N']['normalize_w']
+        lr = self.spec_tree['TDREG-N']['lr']
+        batch_size = self.spec_tree['TDREG-N']['batch_size']
+        td_reg = self.spec_tree['TDREG-N']['td_reg']
 
         tdreg = TDREG_Neural(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon, policy_net = None,\
             seed = self.seed, hidden_layers = hidden_layers, activation = activation, output_transform = 'logexp',\
@@ -720,28 +674,28 @@ class Off_Policy_Evaluation():
         
         value_est = tdreg.train(num_iter = num_iter, lr=lr, td_reg = td_reg, batch_size = batch_size, normalize_w=normalize_w)
         
-        return('TDREG_Neural', value_est)
+        return('TDREG-N', value_est)
 
-    def run_TDREG(self):
+    def run_TDREG_Kernel(self):
         from rl_nexus.components.ope.TDREG_Kernel import TDREG_Kernel
 
-        value_reg = self.spec_tree['TDREG']['value_reg']
-        td_ball_epsilon = self.spec_tree['TDREG']['td_ball_epsilon']
-        w_reg = self.spec_tree['TDREG']['w_reg']
-        hidden_layers = self.spec_tree['TDREG']['hidden_layers']
-        activation = self.spec_tree['TDREG']['activation']
+        value_reg = self.spec_tree['TDREG-K']['value_reg']
+        td_ball_epsilon = self.spec_tree['TDREG-K']['td_ball_epsilon']
+        w_reg = self.spec_tree['TDREG-K']['w_reg']
+        hidden_layers = self.spec_tree['TDREG-K']['hidden_layers']
+        activation = self.spec_tree['TDREG-K']['activation']
 
-        input_mode = self.spec_tree['TDREG']['input_mode']
-        num_iter = self.spec_tree['TDREG']['num_iter']
-        normalize_w = self.spec_tree['TDREG']['normalize_w']
-        lr = self.spec_tree['TDREG']['lr']
-        batch_size = self.spec_tree['TDREG']['batch_size']
-        use_var_in_loss = self.spec_tree['TDREG']['use_var_in_loss']
-        tail_average = self.spec_tree['TDREG']['tail_average']
+        input_mode = self.spec_tree['TDREG-K']['input_mode']
+        num_iter = self.spec_tree['TDREG-K']['num_iter']
+        normalize_w = self.spec_tree['TDREG-K']['normalize_w']
+        lr = self.spec_tree['TDREG-K']['lr']
+        batch_size = self.spec_tree['TDREG-K']['batch_size']
+        use_var_in_loss = self.spec_tree['TDREG-K']['use_var_in_loss']
+        tail_average = self.spec_tree['TDREG-K']['tail_average']
 
-        num_random_feature_per_obs_dim = self.spec_tree['TDREG']['num_random_feature_per_obs_dim']
-        default_length_scale = self.spec_tree['TDREG']['default_length_scale']
-        scale_length_adjustment = self.spec_tree['TDREG']['scale_length_adjustment']
+        num_random_feature_per_obs_dim = self.spec_tree['TDREG-K']['num_random_feature_per_obs_dim']
+        default_length_scale = self.spec_tree['TDREG-K']['default_length_scale']
+        scale_length_adjustment = self.spec_tree['TDREG-K']['scale_length_adjustment']
 
         tdreg = TDREG_Kernel(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon, policy_net = None,\
             value_reg = value_reg, input_mode = input_mode, seed = self.seed, default_length_scale=default_length_scale,\
@@ -751,7 +705,7 @@ class Off_Policy_Evaluation():
         value_est = tdreg.train(num_iter = num_iter, batch_size = batch_size, lr = lr, td_ball_epsilon=td_ball_epsilon,\
             w_reg = w_reg, normalize_w = normalize_w, use_var_in_loss = use_var_in_loss, tail_average = tail_average)
 
-        return('TDREG', value_est)
+        return('TDREG-K', value_est)
 
 
 

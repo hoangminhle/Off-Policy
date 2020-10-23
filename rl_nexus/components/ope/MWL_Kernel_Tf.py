@@ -20,6 +20,7 @@ class MWL(Basic_Alg):
         self.hidden_layers_w = hidden_layers_w
         self.hidden_layers_q = hidden_layers_q
         # import pdb; pdb.set_trace()
+        self.act_encoded = np.linspace(-1,1, act_dim)
 
         self.med_dist = med_dist
         self.seed = seed
@@ -43,6 +44,7 @@ class MWL(Basic_Alg):
         
         self._session.run([tf.compat.v1.variables_initializer(self.trainable_vars)])
         self.q_net.load_weight(model_weights)
+        
         # tf.get_default_session().run(
         #     [tf.variables_initializer(self.trainable_vars)]
         # )
@@ -86,9 +88,12 @@ class MWL(Basic_Alg):
         self.next_act_b = tf.compat.v1.placeholder(dtype=tf.int32, shape=[None, 1])    
         self.next_obs_act_b = tf.concat([self.next_obs_ph, \
                 tf.cast(self.next_act_b, tf.float32)], axis=1)
+        # self.next_act_e = [
+        #     tf.zeros([tf.shape(input=self.next_obs_ph)[0], 1], dtype=tf.int32),
+        #     tf.ones([tf.shape(input=self.next_obs_ph)[0], 1], dtype=tf.int32),
+        # ]
         self.next_act_e = [
-            tf.zeros([tf.shape(input=self.next_obs_ph)[0], 1], dtype=tf.int32),
-            tf.ones([tf.shape(input=self.next_obs_ph)[0], 1], dtype=tf.int32),
+            tf.ones([tf.shape(input=self.next_obs_ph)[0], 1], dtype=tf.int32) * self.act_encoded[a] for a in range(self.act_dim)
         ]
         self.next_obs_act_e = [
             tf.concat([self.next_obs_ph, tf.cast(self.next_act_e[0], tf.float32)], axis=1),
@@ -101,9 +106,12 @@ class MWL(Basic_Alg):
         self.next_act_b_2 = tf.compat.v1.placeholder(dtype=tf.int32, shape=[None, 1])    
         self.next_obs_act_b_2 = tf.concat([self.next_obs_ph_2, \
                 tf.cast(self.next_act_b_2, tf.float32)], axis=1)
+        # self.next_act_e_2 = [
+        #     tf.zeros([tf.shape(input=self.next_obs_ph_2)[0], 1], dtype=tf.int32),
+        #     tf.ones([tf.shape(input=self.next_obs_ph_2)[0], 1], dtype=tf.int32),
+        # ]
         self.next_act_e_2 = [
-            tf.zeros([tf.shape(input=self.next_obs_ph_2)[0], 1], dtype=tf.int32),
-            tf.ones([tf.shape(input=self.next_obs_ph_2)[0], 1], dtype=tf.int32),
+            tf.ones([tf.shape(input=self.next_obs_ph_2)[0], 1], dtype=tf.int32) * self.act_encoded[a] for a in range(self.act_dim)
         ]
         self.next_obs_act_e_2 = [
             tf.concat([self.next_obs_ph_2, tf.cast(self.next_act_e_2[0], tf.float32)], axis=1),
@@ -146,7 +154,8 @@ class MWL(Basic_Alg):
         with tf.compat.v1.variable_scope(self.scope, reuse=reuse):
             x = tf.concat([obs_tf, tf.cast(act_tf, tf.float32)], axis=1)
             for h in self.hidden_layers_w:
-                x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.relu)
+                # x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.relu)
+                x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.tanh)
 
             w = tf.compat.v1.layers.dense(x, 1, activation=None, kernel_regularizer=tf.keras.regularizers.l2(l=0.5 * (1.0)))
 
@@ -327,16 +336,16 @@ class MWL(Basic_Alg):
             [self.debug_w, self.loss, self.train_op],
             feed_dict={
                 self.obs_ph: data['obs_1'],  
-                self.act_ph: data['acts_1'],  
+                self.act_ph: self.act_encoded[data['acts_1']],  
                 self.next_obs_ph: data['next_obs_1'],
-                self.next_act_b: data['next_acts_1'],
+                self.next_act_b: self.act_encoded[data['next_acts_1']],
                 self.init_obs_ph: data['init_obs_1'],
                 self.init_act_b: data['init_acts_1'],
                 self.factor: data['factor_1'],
                 self.obs_ph_2: data['obs_2'],
-                self.act_ph_2: data['acts_2'],
+                self.act_ph_2: self.act_encoded[data['acts_2']],
                 self.next_obs_ph_2: data['next_obs_2'],
-                self.next_act_b_2: data['next_acts_2'],
+                self.next_act_b_2: self.act_encoded[data['next_acts_2']],
                 self.init_obs_ph_2: data['init_obs_2'],
                 self.init_act_b_2: data['init_acts_2'],
                 self.factor_2: data['factor_2'],
@@ -351,7 +360,7 @@ class MWL(Basic_Alg):
             self.value_estimation,
             feed_dict={
                 self.obs_ph: obs,
-                self.act_ph: acts,
+                self.act_ph: self.act_encoded[acts],
                 self.rew_ph: rew,
                 self.factor: factor,
                 self.q_net.tau_ph: self.q_net.temperature,
@@ -365,7 +374,7 @@ class MWL(Basic_Alg):
             self.w,
             feed_dict={
                 self.obs_ph: obs,
-                self.act_ph: acts,
+                self.act_ph: self.act_encoded[acts],
                 self.rew_ph: rew,
                 self.factor: factor,
                 self.q_net.tau_ph: self.q_net.temperature,

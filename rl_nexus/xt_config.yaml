@@ -43,8 +43,8 @@ general:
     advanced-mode: true                 # Needed for plotting.
     workspace: "ws1"
     experiment: "exp1"
-    primary-metric: "hpmax"             # name of metric to optimize in roll-ups, hyperparameter search, and early stopping
-    maximize-metric: true               # how primary metric is aggregated for hp search, hp explorer, early stopping
+    primary-metric: "squared_error"             # name of metric to optimize in roll-ups, hyperparameter search, and early stopping
+    maximize-metric: false               # how primary metric is aggregated for hp search, hp explorer, early stopping
     # step-name: "iters"
     step-name: "Dataset"
     xt-team-name: "dilbert"             # for use with XT Grok

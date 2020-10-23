@@ -125,7 +125,7 @@ class Model_Based_Kernel():
         # accumulated_feature = Phi_pi @ finite_horizon_correction @ transposed_transition_inverse
         accumulated_feature = Phi_init_pi @ finite_horizon_correction @ transposed_transition_inverse
         V = accumulated_feature @ r_sa
-        pdb.set_trace()
+        # pdb.set_trace()
         value_est = np.mean(V)
         return value_est
 

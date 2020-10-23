@@ -71,14 +71,23 @@ DualDICE:
   activation: relu
 
 Kernel:
-  model_reg: 1.0e-4
-  reward_reg: 1.0e-4
-  value_reg: 1.0
+  model_reg: 1.0e-6
+  reward_reg: 1.0e-2
+  value_reg: 2.5
   num_random_feature_per_obs_dim: 250
   default_length_scale: 1.0
   scale_length_adjustment: null
 
-MB:
+MB-N:
+  num_iter: 2000
+  lr: 1.0e-3
+  batch_size: 500
+  tail_average: 10
+  hidden_layers: [64,64]
+  activation: tanh
+  reg: null
+
+MB-K:
   model_reg: 1.0e-6
   reward_reg: 1.0e-2
   num_random_feature_per_obs_dim: 250
@@ -93,7 +102,7 @@ LSTDQ:
   scale_length_adjustment: null
   separate_action_indexing: true
 
-TDREG:
+TDREG-K:
   value_reg: 1.0e-2
   input_mode: sa # or s (depending on whether we want the input to take the action as well)
   num_iter: 500
@@ -110,7 +119,7 @@ TDREG:
   use_var_in_loss: false
   tail_average: 10
 
-TDREG_Neural:
+TDREG-N:
   td_reg: 1.0
   num_iter: 10000
   lr: 1.0e-3

@@ -36,7 +36,7 @@ class MQL():
     def __init__(self, dataset, obs_dim, act_dim, k_tau, seed = 1,norm = None, 
                 policy_net = None, input_mode = 'sa', action_encoding_scheme = 'continuous',
                 keep_terminal_states = True,
-                hidden_layers = [64,64], activation = 'relu', lr = 5e-3, reg_factor=0,gamma = 0.99):
+                hidden_layers = [64,64], activation = 'relu', lr = 5e-3, reg_factor=0,gamma = 0.99, debug= True):
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.gamma = gamma
@@ -111,6 +111,7 @@ class MQL():
             #             )
         else:
             raise NotImplementedError
+        self.debug = debug
 
     def estimate_median_distance(self, num_sample = None):
         index_set_1 = torch.randperm(self.n_samples)[:num_sample]
@@ -185,13 +186,13 @@ class MQL():
                 q_s0_pi = (q_s0 * self.pi_init).sum()
                 value_est = (q_s0_pi) / self.n_episode
                 value_est_list.append(value_est.detach().numpy())
-                
-                print('Iter: {}. Loss current: {:.4f}. MQL Estimate: {:.2f}'.format(i, loss.detach().numpy(), value_est))
-                print('max weight last layer: ', self.q_net[-1].weight.max())
+                if self.debug:
+                    print('Iter: {}. Loss current: {:.4f}. MQL Estimate: {:.2f}'.format(i, loss.detach().numpy(), value_est))
+                    print('max weight last layer: ', self.q_net[-1].weight.max())
 
                 # pdb.set_trace()
-        pdb.set_trace()
-        return value_est
+        # pdb.set_trace()
+        return np.mean(value_est_list[-10:])
                 
 
 

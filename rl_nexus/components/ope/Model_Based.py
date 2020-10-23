@@ -48,9 +48,9 @@ class Dynamics(nn.Module):
 
 class Model_Based():
     def __init__(self, dataset, obs_dim, act_dim, gamma, horizon, 
-                policy_net, hidden_layers, activation, 
+                hidden_layers, activation, policy_net = None,
                 norm = 'std', use_delayed_target = False,
-                keep_terminal_states = True):
+                keep_terminal_states = True, debug = True):
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.gamma = gamma
@@ -99,6 +99,7 @@ class Model_Based():
         # self.feature_extractor = Model_Core(input_dim = self.obs_dim, hidden_layers = hidden_layers, activation= activation)
         self.dynamics = Dynamics(input_dim= self.obs_dim, num_actions = self.act_dim, hidden_layers=hidden_layers,\
             activation=activation)
+        self.debug = debug
 
     def train(self, num_iter = 2000, lr = 1.0e-3, batch_size = 500, tail_average=10, reg = 1e-3):
         optimizer = optim.Adam(self.dynamics.parameters(), lr = lr, betas = (0.9,0.999), eps=1e-4)
@@ -137,7 +138,8 @@ class Model_Based():
             current_loss /= num_batches
             if current_loss < min_loss:
                 min_loss = current_loss.clone().detach()
-                print('iter {} NEW MIN LOSS: '.format(i), min_loss.numpy())
+                if self.debug:
+                    print('iter {} NEW MIN LOSS: '.format(i), min_loss.numpy())
                 #* evaluate
                 with torch.no_grad():
                     P = self.dynamics.next_feature.weight
@@ -150,11 +152,13 @@ class Model_Based():
                     V = accumulated_feature @ reward_feature.T
                     value_est = torch.mean(V).numpy()
                     value_est_list.append(value_est)
-                    print('latest estimate: ', value_est)
-                    print('\n')
+                    if self.debug:
+                        print('latest estimate: ', value_est)
+                        print('\n')
 
             else:
-                print('iter {} current loss: '.format(i), current_loss.clone().detach().numpy())
+                if self.debug:
+                    print('iter {} current loss: '.format(i), current_loss.clone().detach().numpy())
             # roll forward evaluation
             # if i % 1 == 0:
             #     #* get initial observation

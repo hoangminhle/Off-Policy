@@ -31,7 +31,7 @@ class FQE():
     def __init__(self, dataset, obs_dim, act_dim, gamma, horizon, 
                 policy_net, hidden_layers, activation, 
                 norm = 'std', use_delayed_target = False,
-                keep_terminal_states = True):
+                keep_terminal_states = True, debug = True):
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.gamma = gamma
@@ -80,6 +80,7 @@ class FQE():
                 activation= activation, output_transform = None)
         else:
             self.q_net = Model_Core(input_dim = self.obs_dim, hidden_layers = hidden_layers, activation= activation)
+        self.debug = debug
     def train(self, num_iter = 1000, lr = 1.0e-3, batch_size = 500, tail_average=10, reg = 1e-3):
         if self.use_delayed_target:
             value_est = self.train_delayed_target(num_iter, lr, batch_size, tail_average, reg)
@@ -135,7 +136,7 @@ class FQE():
                 q_sterm_pi = (q_sterm * self.pi_term).sum()
                 value_est = (q_s0_pi - self.gamma**self.horizon*q_sterm_pi) / self.n_episode
                 value_est_list.append(value_est.detach().numpy())
-            if i %10 == 0 and i>0:
+            if i %10 == 0 and i>0 and self.debug:
                 print('\n')
                 print('iter {} Trailing estimate: '.format(i), np.mean(value_est_list[-10:]))
                 print('loss {}'.format(loss.detach().numpy()))

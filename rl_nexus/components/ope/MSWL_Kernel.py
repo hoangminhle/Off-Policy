@@ -171,8 +171,8 @@ class MSWL():
                 print('max weight last layer: ', self.w_net.model[-1].weight.max())
                 print('\n')
                 # if  i % 1000 == 0:
-                pdb.set_trace()
-        pdb.set_trace()
+                # pdb.set_trace()
+        # pdb.set_trace()
         return value_est
 
 
