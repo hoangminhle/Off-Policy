@@ -31,6 +31,7 @@ class Simple_Policy_Model(nn.Module):
         layers.append(output_layer)
         
         self.model = nn.Sequential(*layers)
+        self.n_actions = num_outputs
     
     def forward(self,x):
         return self.model(x)
@@ -53,8 +54,15 @@ class Simple_Policy_Model(nn.Module):
         action_prob = action_probs[action]
         # import pdb; pdb.set_trace()
         # return action.data.numpy()[0], action_prob.data.numpy()[0]
-        return action.data.numpy(), action_prob.data.numpy()
-    
+        return action.data.numpy(), action_prob.data.numpy(), action_probs.data.numpy()
+
+    def sample_action_epsilon_greedy(self, obs, eps=0.2):
+        action_probs = torch.ones(self.n_actions) / (self.n_actions-1) * eps
+        action_probs[self.model(torch.tensor(obs, dtype=torch.float)).argmax()] = 1.0-eps
+        action = torch.squeeze(torch.multinomial(action_probs, 1))
+        action_prob = action_probs[action]
+        return action.data.numpy(), action_prob.data.numpy(), action_probs.data.numpy()
+
     def get_probabilities(self, obs):
         action_probs = F.softmax(self.model(torch.tensor(obs, dtype=torch.float))/self.temperature, dim=-1)
         return action_probs.data.numpy()

@@ -5,3 +5,6 @@ max_ep_len: 200
 fixed_length_episode: true
 smooth_reward: false
 stochastic_dynamics: false
+# these 2 params below will not be used, just to read into the spectree, for code compatbility with CartPoleV2
+num_actions: 2
+task: balance

@@ -3,9 +3,11 @@ enabled: 1
 dataset_seed: 25
 use_ray: false
 algo_seed: randint
+behavior_policy_type: null
 behavior_policy_range:
   min: null
   max: null
+read_data_from_file: false
 load_data_from: null
 load_model_from: null
 save_results_to: null
@@ -21,7 +23,7 @@ model:
   component: models/Simple_Policy_Model
 
 offline_estimators: ['MWL', 'MSWL', 'MQL']
-
+debug_mode: false
 
 ## Hyperparameters for different estimators listed below
 on_policy_eval_num_episodes: 200
@@ -71,24 +73,60 @@ DualDICE:
 Kernel:
   model_reg: 1.0e-4
   reward_reg: 1.0e-4
-  value_reg: 1.0e-3
+  value_reg: 1.0
   num_random_feature_per_obs_dim: 250
-  default_length_scale: 0.1
-  scale_length_adjustment: median
+  default_length_scale: 1.0
+  scale_length_adjustment: null
+
+MB:
+  model_reg: 1.0e-6
+  reward_reg: 1.0e-2
+  num_random_feature_per_obs_dim: 250
+  default_length_scale: 1.0
+  scale_length_adjustment: null
+  separate_action_indexing: true
+
+LSTDQ:
+  value_reg: 0.1
+  num_random_feature_per_obs_dim: 250
+  default_length_scale: 1.0
+  scale_length_adjustment: null
+  separate_action_indexing: true
 
 TDREG:
-  value_reg: 1.0e-3
+  value_reg: 1.0e-2
   input_mode: sa # or s (depending on whether we want the input to take the action as well)
   num_iter: 500
-  batch_size: 1000
+  batch_size: null
   lr: 1.0e-3
-  td_ball_epsilon: 1.0e-2
-  normalize_w: true
+  td_ball_epsilon: 1.0e-1
+  normalize_w: false
   hidden_layers: [64,64]
   activation: tanh
   w_reg: 1.0e-5
   num_random_feature_per_obs_dim: 250
-  default_length_scale: 0.1
-  scale_length_adjustment: median
-  use_var_in_loss: true
+  default_length_scale: 1.0
+  scale_length_adjustment: null
+  use_var_in_loss: false
   tail_average: 10
+
+TDREG_Neural:
+  td_reg: 1.0
+  num_iter: 10000
+  lr: 1.0e-3
+  batch_size: 20
+  hidden_layers: [64,64]
+  activation: tanh
+  tail_average: 10
+  normalize_w: false
+
+FQE:
+  num_iter: 1000
+  lr: 1.0e-3
+  batch_size: 500
+  hidden_layers: [64,64]
+  activation: tanh
+  tail_average: 10
+  # use_separate_target_net: false
+  use_delayed_target: false
+  reg: 1.0e-3

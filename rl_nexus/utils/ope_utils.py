@@ -8,6 +8,9 @@ import pdb
 import h5py
 from rl_nexus.utils.data_size_check import total_size
 import torch.nn.functional as F
+import json
+import pickle
+import math
 
 ### OPE additions
 def set_seed(seed):
@@ -17,34 +20,104 @@ def set_seed(seed):
 
 # data = read_batch_experience(dataset_path, tf_policy_net, self.num_episodes, self.target_temp, self.horizon, self.gamma)
 def read_batch_experience(dataset_path, target_net, num_episodes, target_temp, horizon, gamma):
-    data = {}
-    hf = h5py.File(dataset_path,'r')
-    n_samples = hf['obs'].shape[0]
-    data['obs'] = hf.get('obs')[:]
-    data['next_obs'] = hf.get('next_obs')[:]
-    data['acts'] = hf.get('acts')[:].reshape(n_samples,-1)
-    data['next_acts'] = hf.get('next_acts')[:].reshape(n_samples,-1)
-    data['rews'] = hf.get('rews')[:].reshape(n_samples, -1)
-    data['done'] = hf.get('done')[:].reshape(n_samples, -1)
-    # data['info'] = hf.get('info')[:].reshape(n_samples, -1)
-    data['behavior_act_prob'] = hf.get('behavior_act_prob')[:].reshape(n_samples,-1)
+    with open(dataset_path,'rb') as f:
+        data = pickle.load(f)
+    num_samples = data['obs'].shape[0]
     data['target_act_prob'] = target_net.get_prob_with_act(data['obs'], data['acts'])
     data['ratio'] = data['target_act_prob'] / data['behavior_act_prob']
-    data['time_step'] = hf.get('time_step')[:].reshape(n_samples, -1)
     data['factor'] = gamma**data['time_step']
-    # data['init_acts'] = data['acts'][::ep_len]
-    # data['init_obs'] = data['obs'][::ep_len]
     data['target_prob_obs'] = target_net.get_probabilities(data['obs'])
     data['target_prob_next_obs'] = target_net.get_probabilities(data['next_obs'])
-    data['init_obs'] = hf.get('init_obs')[:].reshape(num_episodes,-1)
-    data['term_obs'] = hf.get('term_obs')[:].reshape(num_episodes,-1)
-    data['init_acts'] = hf.get('init_acts')[:].reshape(num_episodes,-1)
-    
-    if total_size(data) / 1024**2 > 10:
-        import warnings
-        warnings.warn("The data size is rather large")
-    # print(total_size(data, verbose= True))
+    data['target_prob_init_obs'] = data['target_prob_obs'][::horizon]
+    data['target_prob_term_obs'] = data['target_prob_next_obs'][horizon-1::horizon]
     return data
+
+def plot_histogram_is(ratio, info, dataset_seed, result_path, name, save_fig= False):
+    if save_fig:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import PercentFormatter
+        #* plot ratio histogram
+        n_bins= 10
+        bin_list = [0]
+        mark = 1.0/2
+        while mark < ratio.max():
+            bin_list.append(mark)
+            mark = 2*mark
+        # bin_list = [0, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, ratio.max()]
+        
+        non_terminal_ratio = ratio[info == False]
+        fig, axs = plt.subplots(2)
+        # axs[0].hist(non_terminal_ratio, weights = np.ones(len(non_terminal_ratio))/len(non_terminal_ratio), bins = n_bins)
+        axs[0].hist(non_terminal_ratio, weights = np.ones(len(non_terminal_ratio))/len(non_terminal_ratio), bins = n_bins)
+        axs[0].set_title('Log scale - Trajectory-level importance ratio over non-terminal steps', fontsize = 9)
+        # axs[1].hist(ratio, weights = np.ones(len(ratio))/len(ratio), bins = n_bins)
+        axs[1].hist(ratio, weights = np.ones(len(ratio))/len(ratio), bins = n_bins)
+        axs[1].set_title('Log scale - Trajectory-level importance ratio over all steps', fontsize = 9)
+        axs[0].yaxis.set_major_formatter(PercentFormatter(1))
+        axs[1].yaxis.set_major_formatter(PercentFormatter(1))
+        # plt.savefig(result_path+'{}_pdis_ratio_dist.png'.format(dataset_seed))
+        # plt.savefig('test/'+'{}_pdis_ratio_dist.png'.format(dataset_seed))
+        plt.savefig('test/'+'{}_dist.png'.format(name))
+        pdb.set_trace()
+def summarize_data(data, result_path, save_fig = False):
+    if save_fig:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import PercentFormatter
+        #* plot ratio histogram
+        n_bins = 10
+        non_terminal_data = data['ratio'][data['info']==False]
+        plt.hist(non_terminal_data, weights = np.ones(len(non_terminal_data))/len(non_terminal_data), bins = n_bins)
+        plt.title('Density ratio histogram over non-Terminal States', fontsize = 15)
+        # pdb.set_trace()
+        plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+        plt.savefig(result_path+'{}_ratio_dist.png'.format(data['metadata']['dataset_seed']))
+
+def choose_estimate_from_sequence(value_est_list):
+        low = math.floor(min(value_est_list))
+        high = math.ceil(max(value_est_list))
+        bins = range(low, high+1)
+        hist = np.histogram(np.array(value_est_list), bins)
+        largest_bin = hist[0].argmax()
+        lower = hist[1][largest_bin]
+        upper = hist[1][largest_bin+1]
+        #* get the entries in between lower and upper
+        selected_values = [val for val in value_est_list if (lower <= val) and (val <= upper)]
+        assert len(selected_values) == hist[0][largest_bin]
+        return np.mean(selected_values)
+
+# def read_batch_experience(dataset_path, target_net, num_episodes, target_temp, horizon, gamma):
+#     data = {}
+#     hf = h5py.File(dataset_path,'r')
+#     n_samples = hf['obs'].shape[0]
+#     data['obs'] = hf.get('obs')[:]
+#     data['next_obs'] = hf.get('next_obs')[:]
+#     data['acts'] = hf.get('acts')[:].reshape(n_samples,-1)
+#     data['next_acts'] = hf.get('next_acts')[:].reshape(n_samples,-1)
+#     data['rews'] = hf.get('rews')[:].reshape(n_samples, -1)
+#     data['done'] = hf.get('done')[:].reshape(n_samples, -1)
+#     # data['info'] = hf.get('info')[:].reshape(n_samples, -1)
+#     data['behavior_act_prob'] = hf.get('behavior_act_prob')[:].reshape(n_samples,-1)
+#     data['target_act_prob'] = target_net.get_prob_with_act(data['obs'], data['acts'])
+#     data['ratio'] = data['target_act_prob'] / data['behavior_act_prob']
+#     data['time_step'] = hf.get('time_step')[:].reshape(n_samples, -1)
+#     data['factor'] = gamma**data['time_step']
+#     # data['init_acts'] = data['acts'][::ep_len]
+#     # data['init_obs'] = data['obs'][::ep_len]
+#     data['target_prob_obs'] = target_net.get_probabilities(data['obs'])
+#     data['target_prob_next_obs'] = target_net.get_probabilities(data['next_obs'])
+#     data['init_obs'] = hf.get('init_obs')[:].reshape(num_episodes,-1)
+#     data['term_obs'] = hf.get('term_obs')[:].reshape(num_episodes,-1)
+#     data['init_acts'] = hf.get('init_acts')[:].reshape(num_episodes,-1)
+    
+#     if total_size(data) / 1024**2 > 10:
+#         import warnings
+#         warnings.warn("The data size is rather large")
+#     # print(total_size(data, verbose= True))
+#     return data
 
 # value_true = evaluate_on_policy(self.environment, tf_policy_net, num_episodes = 20, gamma = self.gamma)
 
@@ -239,7 +312,8 @@ class Q_Model_Tf():
         logits = logit_value / self.tau_ph
         prob = tf.stop_gradient(tf.nn.softmax(logits, axis=1))
         if split:
-            return tf.split(prob, 2, axis=1)
+            # return tf.split(prob, 2, axis=1)
+            return tf.split(prob, self.act_dim, axis=1)
         else:
             return prob
     
@@ -368,5 +442,6 @@ class convert_policy_network():
         logits = logit_values / self.temperature
         action_probabilities = F.softmax(torch.tensor(logits), dim=1).numpy()
         return action_probabilities
+
 
 

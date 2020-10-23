@@ -1,0 +1,9 @@
+component: environments/CartPoleV2_Env
+name: CartPoleV2_Balance_Smooth
+seed: 1
+num_actions: 5
+task: balance
+max_ep_len: 500
+fixed_length_episode: true
+smooth_reward: true
+stochastic_dynamics: false
