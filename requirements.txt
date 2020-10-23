@@ -7,3 +7,5 @@ oyaml==1.0
 # optional
 # torchvision==0.7.0
 
+# locally for plotting, need to install seaborn
+#seaborn==0.11.0
