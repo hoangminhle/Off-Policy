@@ -118,5 +118,6 @@ jobs/
 runspecs/
 test/
 rl_nexus/test/
+notebooks/
 .idea/
 *~
