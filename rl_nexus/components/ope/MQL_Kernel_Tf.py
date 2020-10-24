@@ -23,6 +23,8 @@ class MQL(Basic_Alg):
         self.med_dist = med_dist
         # self.q_net = q_net
         self.norm = norm
+        
+        self.act_encoded = np.linspace(-1,1, act_dim)
 
         #XXX debug
         self.debug_q = {}
@@ -73,23 +75,29 @@ class MQL(Basic_Alg):
             else:
                 org_obs = obs_tf
             prob_mask = self.q_net.build_prob(org_obs, split=True)
-            
+            q = []
             with tf.compat.v1.variable_scope(self.scope, reuse=reuse):
-                x = tf.concat([obs_tf, tf.zeros([tf.shape(input=obs_tf)[0], 1])], axis=1)
+                # x = tf.concat([obs_tf, tf.zeros([tf.shape(input=obs_tf)[0], 1])], axis=1)
+                x = tf.concat([obs_tf, tf.ones([tf.shape(input=obs_tf)[0], 1])*self.act_encoded[0]], axis=1)
                 for h in self.hidden_layers:
                     x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.relu)
                 q0 = tf.compat.v1.layers.dense(x, 1, activation=None, 
                                 kernel_regularizer=tf.keras.regularizers.l2(0.5 * (1.)),
                                 bias_regularizer=tf.keras.regularizers.l2(0.5 * (1.)))
-            
-            with tf.compat.v1.variable_scope(self.scope, reuse=True):
-                x = tf.concat([obs_tf, tf.ones([tf.shape(input=obs_tf)[0], 1])], axis=1)
-                for h in self.hidden_layers:
-                    x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.relu)
-                q1 = tf.compat.v1.layers.dense(x, 1, activation=None, 
-                                kernel_regularizer=tf.keras.regularizers.l2(0.5 * (1.)),
-                                bias_regularizer=tf.keras.regularizers.l2(0.5 * (1.)))
-            value = q0 * prob_mask[0] + q1 * prob_mask[1]
+                q.append(q0)
+            for a in range(1,self.act_dim):
+                with tf.compat.v1.variable_scope(self.scope, reuse=True):
+                    x = tf.concat([obs_tf, tf.ones([tf.shape(input=obs_tf)[0], 1])*self.act_encoded[a]], axis=1)
+                    for h in self.hidden_layers:
+                        x = tf.compat.v1.layers.dense(x, h, activation=tf.nn.relu)
+                    q1 = tf.compat.v1.layers.dense(x, 1, activation=None, 
+                                    kernel_regularizer=tf.keras.regularizers.l2(0.5 * (1.)),
+                                    bias_regularizer=tf.keras.regularizers.l2(0.5 * (1.)))
+                    q.append(q1)
+            # value = q0 * prob_mask[0] + q1 * prob_mask[1]
+            value = 0
+            for a in range(self.act_dim):
+                value += q[a]*prob_mask[a]
         else:
             
             with tf.compat.v1.variable_scope(self.scope, reuse=reuse):
@@ -142,8 +150,8 @@ class MQL(Basic_Alg):
                 self.obs_ph_2: data['obs_2'],
                 self.next_obs_ph: data['next_obs_1'],
                 self.next_obs_ph_2: data['next_obs_2'],
-                self.act_ph: data['act_1'],
-                self.act_ph_2: data['act_2'],                
+                self.act_ph: self.act_encoded[data['act_1']],
+                self.act_ph_2: self.act_encoded[data['act_2']],                
                 self.rew_ph: data['rew_1'],
                 self.rew_ph_2: data['rew_2'],
                 self.q_net.tau_ph: self.q_net.temperature,

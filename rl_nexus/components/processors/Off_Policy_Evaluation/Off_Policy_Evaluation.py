@@ -370,7 +370,7 @@ class Off_Policy_Evaluation():
         
         return ('MWL', np.mean(value_est_list[-tail_average:]))
 
-    def run_MQL(self):
+    def run_MQL_torch(self):
         from rl_nexus.components.ope.MQL_Kernel import MQL
         k_tau = self.spec_tree['MQL']['k_tau']
         lr = self.spec_tree['MQL']['lr']
@@ -392,7 +392,7 @@ class Off_Policy_Evaluation():
         value_est = mql.train(num_iter = num_iter, batch_size=batch_size, lr=lr, q_reg = reg, eval_interval = eval_interval)
         return ('MQL', value_est)
 
-    def run_MQL_tf(self):
+    def run_MQL(self):
         from rl_nexus.components.ope.MQL_Kernel_Tf import MQL
         k_tau = self.spec_tree['MQL']['k_tau']
         lr = self.spec_tree['MQL']['lr']
@@ -424,7 +424,7 @@ class Off_Policy_Evaluation():
             if iter % eval_interval == 0:
                 value_est = mql.evaluation(self.data['init_obs'])
                 value_est_list.append(value_est)
-                if iter % 1000 == 0:
+                if iter % 1000 == 0 and self.debug_mode:
                     print('Iter: {}. True: {:.2f}. MQL Estimate: {:.2f}'.format(iter,self.value_true, np.mean(value_est_list[-tail_average:])))
         
         mql.close()
@@ -599,8 +599,6 @@ class Off_Policy_Evaluation():
         mb = Model_Based(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
             hidden_layers=hidden_layers, activation=activation, norm=None, debug=self.debug_mode)
         value_est = mb.train(num_iter=num_iter, lr=lr, batch_size=batch_size, tail_average=tail_average)
-        return value_est
-        # value_est = mb.estimate()
         return ('MB-N', value_est)
 
     def run_MB_Kernel(self):

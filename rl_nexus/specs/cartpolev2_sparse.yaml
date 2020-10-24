@@ -20,11 +20,11 @@ string_replacements:
   <name>: CartPoleV2_Balance_Sparse
   <horizon>: 500
   <behavior_type>: single
-  <behavior_min>: 15
-  <behavior_max>: 15
+  <behavior_min>: 20
+  <behavior_max>: 20
   <num_traj>: 200
-  <target_id>: 15
-  <target_temp>: 2.0
+  <target_id>: 20
+  <target_temp>: 1.5
   <debug>: false
   <use_ray>: true
 
@@ -95,7 +95,7 @@ processing_stages:
         # offline_estimators: ['PDIS', 'WPDIS', 'MB', 'LSTD', 'LSTDQ', 'TDREG', 'MWL', 'MSWL', 'MQL', 'DualDICE', 'FQE', 'TDREG_Neural']
         # offline_estimators: ['MB', 'TDREG']
         # offline_estimators: ['MWL', 'MSWL', 'MQL', 'DualDICE']
-        # offline_estimators: ['FQE', 'MWL']
+        # offline_estimators: ['MB-N']
         # offline_estimators: ['PDIS', 'WPDIS','MB', 'LSTD', 'LSTDQ']
         offline_estimators: ['PDIS', 'WPDIS', 'MB-K', 'LSTD', 'LSTDQ', 'TDREG-K', 'MWL', 'MSWL', 'MQL', 'DualDICE', 'TDREG-N', 'FQE', 'MB-N']
         debug_mode: <debug>
@@ -107,7 +107,7 @@ processing_stages:
           reg: 0.0
           batch_size: 500
           num_iter: 5000
-          hidden_layers: [32,32]
+          hidden_layers: [64,64] # 32 in original implementation
           eval_interval: 100
           tail_average: 10
 
@@ -117,7 +117,7 @@ processing_stages:
           reg: 0.0
           batch_size: 500
           num_iter: 10000
-          hidden_layers: [64,64]
+          hidden_layers: [64,64] # 32 in original implementation
           eval_interval: 100
           tail_average: 10
 
@@ -126,8 +126,8 @@ processing_stages:
           lr: 5.0e-3
           reg: 2.0e-3
           batch_size: 500
-          num_iter: 20000 #30000 original implementation
-          hidden_layers: [32,32]
+          num_iter: 30000 #30000 original implementation
+          hidden_layers: [64,64] # 32 in original implementation
           eval_interval: 100
           tail_average: 10
 
@@ -139,7 +139,7 @@ processing_stages:
           log_every: 100
           function_exponent: 1.5
           tail_average: 10
-          hidden_dim: 32
+          hidden_dim: 64 # 32 in original implementation
           hidden_layers: 2
           activation: relu
 
