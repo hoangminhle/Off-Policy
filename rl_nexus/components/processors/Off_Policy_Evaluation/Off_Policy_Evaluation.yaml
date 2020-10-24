@@ -137,5 +137,5 @@ FQE:
   activation: tanh
   tail_average: 10
   # use_separate_target_net: false
-  use_delayed_target: false
+  use_delayed_target: true
   reg: 1.0e-3

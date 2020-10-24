@@ -200,7 +200,7 @@ processing_stages:
           hidden_layers: [64,64]
           activation: tanh
           tail_average: 10
-          use_delayed_target: false
+          use_delayed_target: true
           reg: 1.0e-3
 
         MB-N:

@@ -217,19 +217,20 @@ class FQE():
                 value_est_list.append(value_est.detach().numpy())
                 max_grad = 0
                 max_q_weight = 0
-                for param in self.q_net.parameters():
-                    # param.grad.data.clamp_(-1,1)
-                    if param.grad is not None:
-                        max_grad = max(max_grad, param.grad.data.max())
-                    max_q_weight = max(max_q_weight, param.data.max())
-                print('\n')
-                print('iter {} Trailing estimate: '.format(i), np.mean(value_est_list[-tail_average:]))
-                print('current estimate: ', value_est)
-                print('current loss: ', current_iter_loss.detach().numpy())
-                print('max linear weight:', linear_layer.max())
-                print('max q gradient:', max_grad)
-                print('max q weight:', max_q_weight)
-            if i % 100  == 0:
+                if self.debug:
+                    for param in self.q_net.parameters():
+                        # param.grad.data.clamp_(-1,1)
+                        if param.grad is not None:
+                            max_grad = max(max_grad, param.grad.data.max())
+                        max_q_weight = max(max_q_weight, param.data.max())
+                    print('\n')
+                    print('iter {} Trailing estimate: '.format(i), np.mean(value_est_list[-tail_average:]))
+                    print('current estimate: ', value_est)
+                    print('current loss: ', current_iter_loss.detach().numpy())
+                    print('max linear weight:', linear_layer.max())
+                    print('max q gradient:', max_grad)
+                    print('max q weight:', max_q_weight)
+            if i % 100  == 0 and self.debug:
                 print('Current loss in iter {}: {:4f}'.format(i, current_iter_loss.numpy()))
         return np.mean(value_est_list[-tail_average:])
 

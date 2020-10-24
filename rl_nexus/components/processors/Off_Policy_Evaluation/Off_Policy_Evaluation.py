@@ -363,7 +363,7 @@ class Off_Policy_Evaluation():
             if iter % eval_interval == 0:
                 value_est = mwl.evaluation(self.data['obs'], self.data['acts'], self.data['factor'], self.data['rews'])
                 value_est_list.append(value_est)
-                if iter % 1000 == 0:
+                if iter % 1000 == 0 and self.debug_mode:
                     print('Iter: {}. True: {:.2f}. MWL Estimate: {:.2f}'.format(iter,self.value_true, np.mean(value_est_list[-tail_average:])))
                     # pdb.set_trace()
         mwl.close()
