@@ -5,10 +5,10 @@ log_to_tensorboard: false
 experiment_path: ../results
 job_launcher:
   component: job_launchers/XT
-  enabled: 1
+  enabled: 0
   hp_tuning: false
-  total_runs: 25
-  compute_nodes: 25
+  total_runs: 1
+  compute_nodes: 1
   runs_per_node: 1
   compute_target: azb-cpu
   low_priority: true
@@ -18,13 +18,13 @@ string_replacements:
   <environment>: CartPoleV2_Env
   <experiment_path>: ../results
   <name>: CartPoleV2_Balance_Sparse
-  <horizon>: 500
-  <behavior_type>: single
-  <behavior_min>: 15
-  <behavior_max>: 15
+  <horizon>: 100
+  <behavior_type>: range
+  <behavior_min>: 6
+  <behavior_max>: 10
   <num_traj>: 200
-  <target_id>: 15
-  <target_temp>: 2.0
+  <target_id>: 20
+  <target_temp>: 1.0
   <debug>: false
   <use_ray>: true
 

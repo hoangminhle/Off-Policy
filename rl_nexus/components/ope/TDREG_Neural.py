@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from rl_nexus.components.models.Simple_MLP.Simple_MLP import Simple_MLP
 # from rl_nexus.utils.acgd import ACGD, OptimisticAdam, ModifiedAdam
-from rl_nexus.utils.acgd import OptimisticAdam
+from rl_nexus.utils.optimizer import OptimisticAdam
 from itertools import chain
 from rl_nexus.utils.ope_utils import choose_estimate_from_sequence
 import pdb
