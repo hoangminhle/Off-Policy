@@ -204,7 +204,7 @@ class LSTDQ_Kernel():
             Phi_init_pi[:,i*self.z_dim:(i+1)*self.z_dim] = self.pi_init[:,i][:,None]*Z_init
             Phi_term_pi[:,i*self.z_dim:(i+1)*self.z_dim] = self.pi_term[:,i][:,None]*Z_term
         
-        I_sa = np.eye(self.act_dim*self.z_dim)
+        I_sa = np.eye(self.act_dim*self.z_dim, dtype=self.dtype)
 
         regularized_inverse = np.linalg.inv( np.matmul(Phi.T, Phi-self.gamma*Phi_prime_pi) + self.value_reg*I_sa)
         featurized_reward = np.matmul(Phi.T, self.rews)

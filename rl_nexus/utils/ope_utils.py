@@ -77,18 +77,30 @@ def summarize_data(data, result_path, save_fig = False):
         plt.savefig(result_path+'{}_ratio_dist.png'.format(data['metadata']['dataset_seed']))
 
 def choose_estimate_from_sequence(value_est_list):
-        low = math.floor(min(value_est_list))
-        high = math.ceil(max(value_est_list))
-        bins = range(low, high+1)
-        hist = np.histogram(np.array(value_est_list), bins)
-        largest_bin = hist[0].argmax()
-        lower = hist[1][largest_bin]
-        upper = hist[1][largest_bin+1]
-        #* get the entries in between lower and upper
-        selected_values = [val for val in value_est_list if (lower <= val) and (val <= upper)]
-        assert len(selected_values) == hist[0][largest_bin]
-        return np.mean(selected_values)
+    low = math.floor(min(value_est_list))
+    high = math.ceil(max(value_est_list))
+    bins = range(low, high+1)
+    hist = np.histogram(np.array(value_est_list), bins)
+    largest_bin = hist[0].argmax()
+    lower = hist[1][largest_bin]
+    upper = hist[1][largest_bin+1]
+    #* get the entries in between lower and upper
+    selected_values = [val for val in value_est_list if (lower <= val) and (val <= upper)]
+    assert len(selected_values) == hist[0][largest_bin]
+    return np.mean(selected_values)
 
+def select_most_likely_value(value_est_list):
+    from sklearn.neighbors import KernelDensity
+    values = np.array(value_est_list).reshape(-1,1)
+    lower = np.percentile(values[:,0],1)
+    upper = np.percentile(values[:,0],99)
+    non_outliers = np.array([value for value in values if (value >= lower) and (value <= upper)])
+    bandwidth = 1.06*np.std(non_outliers)*len(value_est_list)**(-0.2)
+    # kde = KernelDensity(kernel = 'gaussian', bandwidth=0.2).fit(values)
+    kde = KernelDensity(kernel = 'gaussian', bandwidth=bandwidth).fit(values)
+    log_likelihood = kde.score_samples(values)
+    max_idx = np.argmax(log_likelihood)
+    return value_est_list[max_idx]
 # def read_batch_experience(dataset_path, target_net, num_episodes, target_temp, horizon, gamma):
 #     data = {}
 #     hf = h5py.File(dataset_path,'r')

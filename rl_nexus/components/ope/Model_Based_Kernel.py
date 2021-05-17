@@ -101,7 +101,7 @@ class Model_Based_Kernel():
             Phi_init_pi[:,i*self.z_dim:(i+1)*self.z_dim] = self.pi_init[:,i][:,None]*Z_init
             Phi_term_pi[:,i*self.z_dim:(i+1)*self.z_dim] = self.pi_term[:,i][:,None]*Z_term
         
-        I_sa = np.eye(self.act_dim*self.z_dim)
+        I_sa = np.eye(self.act_dim*self.z_dim, dtype=self.dtype)
         #* uncentered /center covariance identity:
         # H = np.eye(self.n_samples)
         # H = np.eye(self.n_samples) - 1.0/self.n_samples*np.ones((self.n_samples, self.n_samples))
@@ -112,8 +112,8 @@ class Model_Based_Kernel():
         # r_sa = np.linalg.inv(Phi.T @ Phi) @ Phi.T @ self.rews
         # Sigma_yx = 1/self.n_samples*Phi_prime_pi.T @ H @ Phi 
         # Sigma_xx = 1/self.n_samples*Phi.T @ H @ Phi
-        Sigma_yx = 1/self.n_samples*Phi_prime_pi.T @ Phi 
-        Sigma_xx = 1/self.n_samples*Phi.T @ Phi
+        Sigma_yx = np.float32(1/self.n_samples*Phi_prime_pi.T @ Phi)
+        Sigma_xx = np.float32(1/self.n_samples*Phi.T @ Phi)
         P = np.matmul(Sigma_yx, np.linalg.inv(Sigma_xx+ self.model_reg*I_sa))
         #* Now that we have the transition operator, we have that:
         #* E_{s'|s}[\phi(s')|s] = P \phi(s)

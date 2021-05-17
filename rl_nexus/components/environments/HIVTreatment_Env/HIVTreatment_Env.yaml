@@ -1,0 +1,13 @@
+component: environments/HIVTreatment_Env
+name: HIVTreatment
+seed: 1
+num_actions: 4
+task: null
+# horizon: 200
+# dt: 5
+# discount: 0.98
+max_ep_len: 200
+logspace: true
+fixed_length_episode: true
+# smooth_reward: true
+# stochastic_dynamics: false

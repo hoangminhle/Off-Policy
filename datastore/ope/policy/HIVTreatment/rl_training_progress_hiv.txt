@@ -1,0 +1,59 @@
+Processing stage 1 of 1
+Saving models to /home/hoang/Off-Policy/results/hiv/rl/HIVTreatment_Env/hiv_policy
+Train_Policy:  Started
+  0.014 hrs        20,000 iters        0.2 rews      200.0 steps    SAVED
+  0.027 hrs        40,000 iters        0.5 rews      200.0 steps    SAVED
+  0.039 hrs        60,000 iters        1.0 rews      200.0 steps    SAVED
+  0.052 hrs        80,000 iters        0.8 rews      200.0 steps
+  0.065 hrs       100,000 iters        6.1 rews      200.0 steps    SAVED
+  0.078 hrs       120,000 iters       14.8 rews      200.0 steps    SAVED
+  0.091 hrs       140,000 iters       37.3 rews      200.0 steps    SAVED
+  0.103 hrs       160,000 iters       49.2 rews      200.0 steps    SAVED
+  0.116 hrs       180,000 iters       54.5 rews      200.0 steps    SAVED
+  0.129 hrs       200,000 iters       82.9 rews      200.0 steps    SAVED
+  0.141 hrs       220,000 iters       86.0 rews      200.0 steps    SAVED
+  0.153 hrs       240,000 iters       76.0 rews      200.0 steps
+  0.166 hrs       260,000 iters       89.4 rews      200.0 steps    SAVED
+  0.178 hrs       280,000 iters       94.1 rews      200.0 steps    SAVED
+  0.190 hrs       300,000 iters       84.5 rews      200.0 steps
+  0.203 hrs       320,000 iters       93.5 rews      200.0 steps
+  0.215 hrs       340,000 iters      100.1 rews      200.0 steps    SAVED
+  0.228 hrs       360,000 iters       92.3 rews      200.0 steps
+  0.240 hrs       380,000 iters       91.0 rews      200.0 steps
+  0.252 hrs       400,000 iters       97.9 rews      200.0 steps
+  0.265 hrs       420,000 iters       98.2 rews      200.0 steps
+  0.277 hrs       440,000 iters      101.9 rews      200.0 steps    SAVED
+  0.289 hrs       460,000 iters       94.7 rews      200.0 steps
+  0.301 hrs       480,000 iters      106.3 rews      200.0 steps    SAVED
+  0.314 hrs       500,000 iters      106.8 rews      200.0 steps    SAVED
+  0.326 hrs       520,000 iters      106.3 rews      200.0 steps
+  0.339 hrs       540,000 iters      102.6 rews      200.0 steps
+  0.351 hrs       560,000 iters      106.2 rews      200.0 steps
+  0.363 hrs       580,000 iters      103.0 rews      200.0 steps
+  0.376 hrs       600,000 iters      101.1 rews      200.0 steps
+  0.388 hrs       620,000 iters      100.3 rews      200.0 steps
+  0.400 hrs       640,000 iters      107.1 rews      200.0 steps    SAVED
+  0.412 hrs       660,000 iters      104.1 rews      200.0 steps
+  0.424 hrs       680,000 iters      103.5 rews      200.0 steps
+  0.437 hrs       700,000 iters      107.0 rews      200.0 steps
+  0.449 hrs       720,000 iters      103.6 rews      200.0 steps
+  0.461 hrs       740,000 iters      107.8 rews      200.0 steps    SAVED
+  0.473 hrs       760,000 iters       97.3 rews      200.0 steps
+  0.486 hrs       780,000 iters      107.9 rews      200.0 steps    SAVED
+  0.498 hrs       800,000 iters      105.6 rews      200.0 steps
+  0.510 hrs       820,000 iters      108.4 rews      200.0 steps    SAVED
+  0.522 hrs       840,000 iters      109.3 rews      200.0 steps    SAVED
+  0.534 hrs       860,000 iters       67.6 rews      200.0 steps
+  0.547 hrs       880,000 iters      109.3 rews      200.0 steps
+  0.559 hrs       900,000 iters       60.0 rews      200.0 steps
+  0.572 hrs       920,000 iters      102.2 rews      200.0 steps
+  0.596 hrs       940,000 iters      106.9 rews      200.0 steps
+  0.620 hrs       960,000 iters      110.3 rews      200.0 steps    SAVED
+  0.633 hrs       980,000 iters      100.1 rews      200.0 steps
+  0.677 hrs     1,000,000 iters      109.4 rews      200.0 steps
+Stage summary (mean trajectory reward):   84.1
+Train_Policy:  Completed
+
+Objective that would be maximized by hyperparameter tuning (hpmax):   84.1
+
+All processing stages completed.

@@ -79,13 +79,15 @@ Kernel:
   scale_length_adjustment: null
 
 MB-N:
-  num_iter: 2000
-  lr: 1.0e-3
-  batch_size: 500
+  num_iter: 3000
+  lr_feature: 1.0e-2
+  lr_model: 1.0e-3
+  eps: 1.0e-4
+  batch_size: 20000
   tail_average: 10
   hidden_layers: [64,64]
   activation: tanh
-  reg: null
+  reg: 2.5e-8
 
 MB-K:
   model_reg: 1.0e-6
@@ -139,3 +141,22 @@ FQE:
   # use_separate_target_net: false
   use_delayed_target: true
   reg: 1.0e-3
+W-Regression:
+  num_iter: 1000
+  lr: 1.0e-3
+  eps: 1.0e-8
+  batch_size: 1000
+  tail_average: 10
+  hidden_layers: [64,64]
+  activation: tanh
+  reg: 0.0
+FL:
+  num_iter: 2000
+  lr_feature: 1.0e-3
+  lr_weight: 1.0e-3
+  batch_size: 1000
+  tail_average: 10
+  hidden_nodes: 1000
+  activation: tanh
+  reg: 0.0
+

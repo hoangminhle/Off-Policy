@@ -1,0 +1,60 @@
+WARNING: experiment_path '../datastore/ope' (found in runspec) does not begin with '../results'. Job results will not be mirrored to Azure Storage.
+Processing stage 1 of 1
+Saving models to /home/hoang/Dilbert_OPE/datastore/ope/policy/CartPoleV2_Balance_Smooth/rl/policy
+Train_Policy:  Started
+  0.004 hrs         4,000 iters       27.8 rews       36.8 steps    SAVED
+  0.008 hrs         8,000 iters       29.1 rews       39.9 steps    SAVED
+  0.012 hrs        12,000 iters       38.2 rews       51.2 steps    SAVED
+  0.018 hrs        16,000 iters       74.7 rews      104.4 steps    SAVED
+  0.024 hrs        20,000 iters      103.5 rews      146.8 steps    SAVED
+  0.033 hrs        24,000 iters      168.9 rews      237.9 steps    SAVED
+  0.041 hrs        28,000 iters      160.4 rews      229.2 steps
+  0.051 hrs        32,000 iters      206.5 rews      290.9 steps    SAVED
+  0.061 hrs        36,000 iters      214.6 rews      286.7 steps    SAVED
+  0.072 hrs        40,000 iters      267.6 rews      354.1 steps    SAVED
+  0.082 hrs        44,000 iters      198.9 rews      271.5 steps
+  0.092 hrs        48,000 iters      225.7 rews      298.2 steps
+  0.104 hrs        52,000 iters      291.4 rews      377.2 steps    SAVED
+  0.115 hrs        56,000 iters      253.7 rews      334.9 steps
+  0.127 hrs        60,000 iters      320.1 rews      407.1 steps    SAVED
+  0.142 hrs        64,000 iters      404.9 rews      478.5 steps    SAVED
+  0.156 hrs        68,000 iters      380.3 rews      462.1 steps
+  0.169 hrs        72,000 iters      307.5 rews      414.8 steps
+  0.184 hrs        76,000 iters      440.3 rews      496.3 steps    SAVED
+  0.199 hrs        80,000 iters      449.0 rews      498.1 steps    SAVED
+  0.214 hrs        84,000 iters      444.1 rews      497.8 steps
+  0.229 hrs        88,000 iters      464.9 rews      500.0 steps    SAVED
+  0.245 hrs        92,000 iters      451.9 rews      499.7 steps
+  0.260 hrs        96,000 iters      452.7 rews      500.0 steps
+  0.275 hrs       100,000 iters      460.8 rews      500.0 steps
+  0.289 hrs       104,000 iters      463.3 rews      500.0 steps
+  0.305 hrs       108,000 iters      461.5 rews      500.0 steps
+  0.319 hrs       112,000 iters      451.8 rews      500.0 steps
+  0.335 hrs       116,000 iters      466.8 rews      500.0 steps    SAVED
+  0.350 hrs       120,000 iters      473.0 rews      500.0 steps    SAVED
+  0.365 hrs       124,000 iters      465.1 rews      500.0 steps
+  0.380 hrs       128,000 iters      440.7 rews      493.2 steps
+  0.395 hrs       132,000 iters      449.1 rews      499.6 steps
+  0.410 hrs       136,000 iters      417.1 rews      483.2 steps
+  0.425 hrs       140,000 iters      462.8 rews      499.2 steps
+  0.440 hrs       144,000 iters      475.8 rews      500.0 steps    SAVED
+  0.455 hrs       148,000 iters      466.9 rews      499.4 steps
+  0.470 hrs       152,000 iters      414.6 rews      487.8 steps
+  0.485 hrs       156,000 iters      473.9 rews      499.7 steps
+  0.501 hrs       160,000 iters      476.8 rews      500.0 steps    SAVED
+  0.516 hrs       164,000 iters      481.7 rews      500.0 steps    SAVED
+  0.530 hrs       168,000 iters      477.9 rews      500.0 steps
+  0.545 hrs       172,000 iters      471.7 rews      500.0 steps
+  0.559 hrs       176,000 iters      477.0 rews      500.0 steps
+  0.574 hrs       180,000 iters      483.3 rews      500.0 steps    SAVED
+  0.588 hrs       184,000 iters      479.4 rews      500.0 steps
+  0.602 hrs       188,000 iters      484.3 rews      500.0 steps    SAVED
+  0.616 hrs       192,000 iters      490.2 rews      500.0 steps    SAVED
+  0.631 hrs       196,000 iters      487.8 rews      500.0 steps
+  0.645 hrs       200,000 iters      481.7 rews      500.0 steps
+Stage summary (mean trajectory reward):  370.2
+Train_Policy:  Completed
+
+Objective that would be maximized by hyperparameter tuning (hpmax):  370.2
+
+All processing stages completed.

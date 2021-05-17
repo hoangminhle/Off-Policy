@@ -1,0 +1,213 @@
+component: root/Root_Component
+cuda: false
+log_to_tensorboard: false
+
+experiment_path: ../results
+job_launcher:
+  component: job_launchers/XT
+  enabled: 1
+  hp_tuning: false
+  total_runs: 25
+  compute_nodes: 25
+  runs_per_node: 1
+  compute_target: azb-cpu
+  low_priority: true
+  hold: false
+
+string_replacements:
+  <environment>: CartPoleV2_Env
+  <experiment_path>: ../results
+  <name>: CartPoleV2_Balance_Smooth
+  <horizon>: 500
+  <behavior_type>: range
+  <behavior_min>: 6
+  <behavior_max>: 10
+  <num_traj>: 200
+  <target_id>: 15
+  <target_temp>: 0.5
+  <debug>: false
+  <use_ray>: true
+
+forward_definitions:
+  - environment: &env_collect_data
+      component: environments/<environment>
+      name: <name>
+      seed: null
+      fixed_length_episode: true
+      max_ep_len: <horizon>
+      num_actions: 5
+      task: balance
+      smooth_reward: true
+      stochastic_dynamics: false
+  - environment: &env_evaluation
+      component: environments/<environment>
+      name: <name>
+      seed: null
+      fixed_length_episode: false
+      max_ep_len: <horizon>
+      num_actions: 5
+      task: balance
+      smooth_reward: true
+      stochastic_dynamics: false
+  - model: &policy_model
+      component: models/Simple_Policy_Model
+      fcnet_hiddens: [64,64]
+      fcnet_activation: tanh
+
+processing_stages:
+  - processing_stage: 
+      component: processors/OPE_E2E
+      enabled: true
+      dataset_seed: randint
+      data_collector:
+        component: processors/Data_Collection
+        behavior_policy_type: <behavior_type> #random_network, range, single
+        behavior_policy_range: 
+          min: <behavior_min>
+          max: <behavior_max>
+          step: 1
+        num_episodes: <num_traj>
+        dataset_seed: null # will be assigned by the parent process
+        load_model_from: $datastore/ope/policy/<name>/rl/
+        save_data: false
+        save_data_to: $datastore/ope/data/<name>/
+        environment: *env_collect_data
+        model: *policy_model
+      off_policy_estimator:
+        component: processors/Off_Policy_Evaluation
+        dataset_seed: null # will be assigned by the parent process
+        use_ray: <use_ray>
+        behavior_policy_type: <behavior_type>
+        behavior_policy_range:
+          min: <behavior_min>
+          max: <behavior_max>
+        environment: *env_evaluation
+        model: *policy_model
+        read_data_from_file: false
+        load_data_from: $datastore/ope/data/<name>/
+        load_model_from: $datastore/ope/policy/<name>/rl/
+        save_results_to: $datastore/ope/results/<name>/
+        target_policy_id: <target_id>
+        target_policy_temperature: <target_temp>
+        num_episodes: <num_traj>
+        horizon: <horizon>
+        on_policy_eval_num_episodes: 100
+        # offline_estimators: ['PDIS', 'WPDIS', 'MB', 'LSTD', 'LSTDQ', 'TDREG', 'MWL', 'MSWL', 'MQL', 'DualDICE', 'FQE', 'TDREG_Neural']
+        # offline_estimators: ['MB', 'TDREG']
+        # offline_estimators: ['MWL', 'MSWL', 'MQL', 'DualDICE']
+        # offline_estimators: ['MB-N']
+        # offline_estimators: ['PDIS', 'WPDIS','MB', 'LSTD', 'LSTDQ']
+        offline_estimators: ['PDIS', 'WPDIS', 'MB-K', 'LSTD', 'LSTDQ', 'TDREG-K', 'MWL', 'MSWL', 'MQL', 'DualDICE', 'TDREG-N', 'FQE', 'MB-N']
+        debug_mode: <debug>
+
+        ## Hyperparameters for different estimators listed below
+        MSWL:
+          k_tau: 1.0
+          lr: 5.0e-3
+          reg: 0.0
+          batch_size: 500
+          num_iter: 5000
+          hidden_layers: [64,64] # 32 in original implementation
+          eval_interval: 100
+          tail_average: 10
+
+        MWL:
+          k_tau: 3.0
+          lr: 5.0e-3
+          reg: 0.0
+          batch_size: 500
+          num_iter: 10000
+          hidden_layers: [64,64] # 32 in original implementation
+          eval_interval: 100
+          tail_average: 10
+
+        MQL:
+          k_tau: 15
+          lr: 5.0e-3
+          reg: 2.0e-3
+          batch_size: 500
+          num_iter: 30000 #30000 original implementation
+          hidden_layers: [64,64] # 32 in original implementation
+          eval_interval: 100
+          tail_average: 10
+
+        DualDICE:
+          nu_learning_rate: 0.0005
+          zeta_learning_rate: 0.005
+          batch_size: 500
+          num_iter: 20000 #30000 original implementation
+          log_every: 100
+          function_exponent: 1.5
+          tail_average: 10
+          hidden_dim: 64 # 32 in original implementation
+          hidden_layers: 2
+          activation: relu
+
+        Kernel:
+          model_reg: 1.0e-6
+          reward_reg: 1.0e-2
+          value_reg: 2.5
+          num_random_feature_per_obs_dim: 250
+          default_length_scale: 1.0
+          scale_length_adjustment: null
+
+        TDREG-K:
+          value_reg: 1.0e-2
+          input_mode: sa # or s (depending on whether we want the input to take the action as well)
+          num_iter: 1000
+          batch_size: null
+          lr: 1.0e-3
+          td_ball_epsilon: 1.0e-1
+          normalize_w: false
+          hidden_layers: [64,64]
+          activation: tanh
+          w_reg: 1.0e-3
+          num_random_feature_per_obs_dim: 250
+          default_length_scale: 1.0
+          scale_length_adjustment: null
+          use_var_in_loss: false
+          tail_average: 10
+        
+        MB-K:
+          model_reg: 1.0e-6
+          reward_reg: 1.0e-2
+          num_random_feature_per_obs_dim: 250
+          default_length_scale: 1.0
+          scale_length_adjustment: null
+          separate_action_indexing: true
+
+        LSTDQ:
+          value_reg: 0.1
+          num_random_feature_per_obs_dim: 250
+          default_length_scale: 1.0
+          scale_length_adjustment: null
+          separate_action_indexing: true
+
+        TDREG-N:
+          td_reg: 1.0
+          num_iter: 10000
+          lr: 1.0e-3
+          batch_size: 20
+          hidden_layers: [64,64]
+          activation: tanh
+          tail_average: 10
+          normalize_w: false
+
+        FQE:
+          num_iter: 1000
+          lr: 1.0e-3
+          batch_size: 500
+          hidden_layers: [64,64]
+          activation: tanh
+          tail_average: 10
+          use_delayed_target: true
+          reg: 1.0e-3
+
+        MB-N:
+          num_iter: 2000
+          lr: 1.0e-3
+          batch_size: 500
+          tail_average: 10
+          hidden_layers: [64,64]
+          activation: tanh
+          reg: null

@@ -194,6 +194,10 @@ class Off_Policy_Evaluation():
             value_est = self.run_WPDIS()
         elif estimator == 'FQE':
             value_est = self.run_FQE()
+        elif estimator == 'W-Regression':
+            value_est = self.run_W_Regression()
+        elif estimator == 'FL':
+            value_est = self.run_FL()
         else:
             raise NotImplementedError
         return value_est
@@ -228,6 +232,10 @@ class Off_Policy_Evaluation():
             value_est = self.run_WPDIS()
         elif estimator == 'FQE':
             value_est = self.run_FQE()
+        elif estimator == 'W-Regression':
+            value_est = self.run_W_Regression()
+        elif estimator == 'FL':
+            value_est = self.run_FL()
         else:
             raise NotImplementedError
         return value_est
@@ -585,6 +593,55 @@ class Off_Policy_Evaluation():
     #     # value_est = self.run_MB_Kernel()
     #     value_est = self.run_MB_Neural()
     #     return ('MB', value_est)
+    def run_W_Regression(self):
+        from rl_nexus.components.ope.W_Regression import W_Regression
+        hidden_layers = self.spec_tree['W-Regression']['hidden_layers']
+        activation = self.spec_tree['W-Regression']['activation']
+        num_iter = self.spec_tree['W-Regression']['num_iter']
+        reg = self.spec_tree['W-Regression']['reg']
+        lr = self.spec_tree['W-Regression']['lr']
+        batch_size = self.spec_tree['W-Regression']['batch_size']
+        tail_average = self.spec_tree['W-Regression']['tail_average']
+        eps = self.spec_tree['W-Regression']['eps']
+
+        w_regression = W_Regression(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
+            hidden_layers=hidden_layers, activation=activation, norm=None, debug = self.debug_mode)
+        value_est = w_regression.train(num_iter=num_iter, lr = lr, batch_size=batch_size, reg=reg,\
+            tail_average=tail_average, eps=eps)
+        return ('W-Regression', value_est)
+
+    def run_FL(self):
+        from rl_nexus.components.ope.Feature_Learning import Feature_Learning
+        hidden_layers = self.spec_tree['FL']['hidden_layers']
+        activation = self.spec_tree['FL']['activation']
+        num_iter = self.spec_tree['FL']['num_iter']
+        reg = self.spec_tree['FL']['reg']
+        lr_feature = self.spec_tree['FL']['lr_feature']
+        lr_model = self.spec_tree['FL']['lr_model']
+        batch_size = self.spec_tree['FL']['batch_size']
+        tail_average = self.spec_tree['FL']['tail_average']
+        eps = self.spec_tree['FL']['eps']
+
+        fl = Feature_Learning(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
+            hidden_layers=hidden_layers, activation=activation, norm=None, debug=self.debug_mode)
+        value_est = fl.train(num_iter=num_iter, lr_feature=lr_feature, lr_model = lr_model, \
+            batch_size=batch_size, reg=reg, tail_average=tail_average, eps=eps)
+        return ('FL', value_est)
+
+        # hidden_nodes = self.spec_tree['FL']['hidden_nodes']
+        # activation = self.spec_tree['FL']['activation']
+        # num_iter = self.spec_tree['FL']['num_iter']
+        # reg = self.spec_tree['FL']['reg']
+        # lr_feature = self.spec_tree['FL']['lr_feature']
+        # lr_weight = self.spec_tree['FL']['lr_weight']
+        # batch_size = self.spec_tree['FL']['batch_size']
+        # tail_average = self.spec_tree['FL']['tail_average']
+
+        # fl = Feature_Learning(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
+        #     hidden_nodes = hidden_nodes, activation=activation, norm=None, debug = self.debug_mode)
+        # value_est = fl.train(num_iter=num_iter, lr_feature=lr_feature, lr_weight=lr_weight, batch_size=batch_size,\
+        #     tail_average=tail_average, reg=reg)
+        # return ('FL', value_est)
 
     def run_MB_Neural(self):
         from rl_nexus.components.ope.Model_Based import Model_Based
@@ -592,13 +649,16 @@ class Off_Policy_Evaluation():
         activation = self.spec_tree['MB-N']['activation']
         num_iter = self.spec_tree['MB-N']['num_iter']
         reg = self.spec_tree['MB-N']['reg']
-        lr = self.spec_tree['MB-N']['lr']
+        lr_feature = self.spec_tree['MB-N']['lr_feature']
+        lr_model = self.spec_tree['MB-N']['lr_model']
         batch_size = self.spec_tree['MB-N']['batch_size']
         tail_average = self.spec_tree['MB-N']['tail_average']
+        eps = self.spec_tree['MB-N']['eps']
 
         mb = Model_Based(self.data, self.obs_dim, self.act_dim, self.gamma, self.horizon,\
             hidden_layers=hidden_layers, activation=activation, norm=None, debug=self.debug_mode)
-        value_est = mb.train(num_iter=num_iter, lr=lr, batch_size=batch_size, tail_average=tail_average)
+        value_est = mb.train(num_iter=num_iter, lr_feature=lr_feature, lr_model = lr_model, \
+            batch_size=batch_size, reg=reg, tail_average=tail_average, eps=eps)
         return ('MB-N', value_est)
 
     def run_MB_Kernel(self):

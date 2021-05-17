@@ -24,7 +24,7 @@ class OPELogger():
         self.estimate_record = {}
         self.mse_record = {}
         self.all_estimators = ['PDIS', 'WPDIS', 'MB-K', 'LSTD', 'LSTDQ', 'TDREG-K', 'MWL', 'MSWL', 'MQL', 'DualDICE', \
-            'TDREG-N', 'FQE', 'MB-N', 'On_Policy', 'Behavior']
+            'TDREG-N', 'FQE', 'MB-N', 'W-Regression', 'FL', 'On_Policy', 'Behavior']
         for estimator in self.all_estimators:
             self.estimate_record[estimator] = []
             self.mse_record[estimator] = []

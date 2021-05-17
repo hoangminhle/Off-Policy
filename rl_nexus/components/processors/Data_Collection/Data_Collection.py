@@ -20,7 +20,7 @@ class Data_Collection():
             self.behavior_policy_range = None
         elif self.behavior_policy_type == 'random_network':
             self.behavior_policy_range = None
-        elif self.behavior_policy_type == 'range':
+        elif self.behavior_policy_type == 'range' or self.behavior_policy_type == 'range_tabular':
             behavior_policy_range = spec_tree['behavior_policy_range']
             self.behavior_policy_range = range(behavior_policy_range['min'], behavior_policy_range['max']+1, behavior_policy_range['step'])
         elif self.behavior_policy_type == 'epsilon_greedy':
@@ -41,17 +41,25 @@ class Data_Collection():
         dummy_env = self.spec_tree.create_component('environment')
         self.obs_space = dummy_env.observation_space
         self.action_space = dummy_env.action_space
-        if self.behavior_policy_range:
-            assert self.behavior_policy_type is not 'random'
-            assert self.behavior_policy_type is not 'random_network'
+        if self.behavior_policy_type == 'range_tabular':
             for behavior_policy_id in self.behavior_policy_range:
-                behavior_policy = self.spec_tree.create_component('model', self.obs_space, self.action_space)
-                model_path = self.spec_tree['load_model_from']+'policy_'+str(behavior_policy_id)+'.pt'
-                behavior_policy.load_model(model_path)
+                policy_path = self.spec_tree['load_model_from']+'pi'+str(behavior_policy_id)+'.npy'
+                q_table_path = self.spec_tree['load_model_from']+'q'+str(behavior_policy_id)+'.npy'
+                behavior_policy = np.load(policy_path)
+                q_table = np.load(q_table_path)
                 self.behavior_policy_collection.append(behavior_policy)
-        elif self.behavior_policy_type == 'random_network':
-            behavior_policy = self.spec_tree.create_component('model', self.obs_space, self.action_space)
-            self.behavior_policy_collection.append(behavior_policy)
+        else:
+            if self.behavior_policy_range:
+                assert self.behavior_policy_type is not 'random'
+                assert self.behavior_policy_type is not 'random_network'
+                for behavior_policy_id in self.behavior_policy_range:
+                    behavior_policy = self.spec_tree.create_component('model', self.obs_space, self.action_space)
+                    model_path = self.spec_tree['load_model_from']+'policy_'+str(behavior_policy_id)+'.pt'
+                    behavior_policy.load_model(model_path)
+                    self.behavior_policy_collection.append(behavior_policy)
+            elif self.behavior_policy_type == 'random_network':
+                behavior_policy = self.spec_tree.create_component('model', self.obs_space, self.action_space)
+                self.behavior_policy_collection.append(behavior_policy)
         
 
         data_path = None
@@ -72,7 +80,7 @@ class Data_Collection():
             ensure_dir_exists(file=self.data_path)
 
     def choose_behavior_policy(self):
-        if self.behavior_policy_type == 'range':
+        if self.behavior_policy_type == 'range' or self.behavior_policy_type == 'range_tabular':
             idx = random.choice(range(len(self.behavior_policy_range)))
             policy = self.behavior_policy_collection[idx]
             policy_id = self.behavior_policy_range[idx]
@@ -152,6 +160,7 @@ class Data_Collection():
             obs = environment.reset()
             done = False
             t = 0
+            import pdb; pdb.set_trace()
             data['init_obs'][eps_id] = obs
             is_init_step = True
             while True:
@@ -178,7 +187,10 @@ class Data_Collection():
                 data['rews'][row_idx] = rew
                 data['behavior_act_prob'][row_idx] = action_prob
                 data['done'][row_idx] = done
-                data['info'][row_idx] = info['terminal']
+                try:
+                    data['info'][row_idx] = info['terminal']
+                except:
+                    data['info'][row_idx] = False
                 data['eps_id'][row_idx] = eps_id
                 data['policy_id'][row_idx] = policy_id
                 
@@ -191,7 +203,7 @@ class Data_Collection():
                 obs = next_obs
             data['term_obs'][eps_id] = next_obs
             # print('Done with episode {}'.format(eps_id+1))
-            # import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         if self.save_data:
             # import json
             # dumped = json.dumps(data, cls = NumpyEncoder)

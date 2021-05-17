@@ -1,0 +1,14 @@
+component: environments/Taxi_Env
+name: Taxi
+seed: 1
+num_actions: 6
+length: 5
+#task: null
+# horizon: 200
+# dt: 5
+# discount: 0.98
+max_ep_len: 500
+#logspace: true
+fixed_length_episode: true
+# smooth_reward: true
+# stochastic_dynamics: false

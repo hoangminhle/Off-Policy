@@ -37,7 +37,7 @@ class Train_Policy():
 
         # Environment component
         self.environment = spec_tree.create_component('environment')
-
+        # import pdb; pdb.set_trace()
         # Agent component
         self.agent = spec_tree.create_component('agent',
                                                 self.environment.observation_space,
